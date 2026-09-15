@@ -7,17 +7,3 @@
   </PropertyGroup>
 
 </Project>
-
-
-
-/# git config --global user.name "Qizman5"
-git config --global user.email "your-email@chnu.edu.ua"
-git remote remove origin
-git remote add origin https://github.com/Qizman5/WarehouseManagementSystem.git
-
-git push -u origin main
-git add .
-git commit -m "Add database schema for WarehouseMS"
-git push -u origin main
-
-#*/
