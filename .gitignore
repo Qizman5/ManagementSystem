@@ -1,0 +1,5 @@
+﻿bin/
+obj/
+*.user
+Client/ClientApp/Platforms/Android/
+Server/ServerApp/appsettings.json
