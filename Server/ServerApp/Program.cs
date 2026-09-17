@@ -9,18 +9,22 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. Додаємо підтримку MVC (Контролери + Razor Views)
 builder.Services.AddControllersWithViews();
 
-// 2. Підключення до бази даних MySQL
+// 2. Реєстрація Swagger для REST API
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// 3. Підключення до бази даних MySQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 30))));
 
-// 3. Зчитування конфігурації JWT
+// 4. Зчитування конфігурації JWT
 var jwtKey = builder.Configuration["Jwt:Key"] 
     ?? throw new InvalidOperationException("JWT Key is missing in configuration.");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 
-// 4. Налаштування аутентифікації JwtBearer
+// 5. Налаштування аутентифікації JwtBearer
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -37,13 +41,11 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtIssuer,
         ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-        ClockSkew = TimeSpan.Zero // Точне вимірювання часу закінчення токена
+        ClockSkew = TimeSpan.Zero
     };
 
-    // Обробка подій авторизації для MVC та API
     options.Events = new JwtBearerEvents
     {
-        // Читання токена з Cookie для MVC запитів
         OnMessageReceived = context =>
         {
             if (context.Request.Cookies.ContainsKey("X-Access-Token"))
@@ -52,8 +54,6 @@ builder.Services.AddAuthentication(options =>
             }
             return Task.CompletedTask;
         },
-
-        // Редирект на сторінку входу, якщо неавторизований (для MVC)
         OnChallenge = context =>
         {
             if (!context.Request.Path.StartsWithSegments("/api"))
@@ -64,8 +64,6 @@ builder.Services.AddAuthentication(options =>
             }
             return Task.CompletedTask;
         },
-
-        // Редирект на 403 AccessDenied, якщо недостатньо прав (для MVC)
         OnForbidden = context =>
         {
             if (!context.Request.Path.StartsWithSegments("/api"))
@@ -77,17 +75,26 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Побудова застосунку після реєстрації УСІХ сервісів
 var app = builder.Build();
 
-// 5. Автоматична ініціалізація бази даних при старті
+// 6. Автоматична ініціалізація бази даних при старті
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.EnsureCreated();
 }
 
-// 6. Конфігурація HTTP pipeline
-if (!app.Environment.IsDevelopment())
+// 7. Конфігурація HTTP pipeline (Middleware)
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse API v1");
+    });
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
@@ -98,11 +105,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Middleware аутентифікації та авторизації (порядок важливий!)
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 7. Стандартний маршрут MVC
+// 8. Стандартний маршрут MVC
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Items}/{action=Index}/{id?}");

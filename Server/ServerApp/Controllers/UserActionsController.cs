@@ -49,12 +49,16 @@ namespace ServerApp.Controllers
                 var item = await _context.Items.FindAsync(userAction.ItemId);
                 if (item == null) return NotFound("Товар не знайдено");
 
-                // Підтримка обох варіантів назв операцій (українською та англійською)
-                if (userAction.ActionType == "Прихід" || userAction.ActionType == "Receipt")
+                var actionType = userAction.ActionType?.Trim().ToLower();
+
+                // Підтримка приходу товару
+                if (actionType == "прихід" || actionType == "income" || actionType == "receipt")
                 {
                     item.Quantity += userAction.Quantity;
+                    userAction.ActionType = "Прихід";
                 }
-                else if (userAction.ActionType == "Списання" || userAction.ActionType == "Shipment")
+                // Підтримка списання товару
+                else if (actionType == "списання" || actionType == "outcome" || actionType == "shipment")
                 {
                     if (item.Quantity < userAction.Quantity)
                     {
@@ -64,6 +68,14 @@ namespace ServerApp.Controllers
                         return View(userAction);
                     }
                     item.Quantity -= userAction.Quantity;
+                    userAction.ActionType = "Списання";
+                }
+                else
+                {
+                    ModelState.AddModelError("ActionType", "Некоректний тип операції.");
+                    ViewData["ItemId"] = new SelectList(_context.Items.AsNoTracking(), "Id", "Name", userAction.ItemId);
+                    ViewData["UserId"] = new SelectList(_context.Users.AsNoTracking(), "Id", "Username", userAction.UserId);
+                    return View(userAction);
                 }
 
                 _context.Add(userAction);

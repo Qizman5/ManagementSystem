@@ -1,9 +1,10 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ServerApp.Models
 {
-    [Table("Actions")] // Якщо таблиця в БД має назву Actions
+    [Table("Actions")]
     public class UserAction
     {
         public int Id { get; set; }
@@ -17,7 +18,7 @@ namespace ServerApp.Models
         public Item? Item { get; set; }
 
         [Required]
-        public string ActionType { get; set; } = string.Empty; // "Прихід" або "Списання"
+        public string ActionType { get; set; } = string.Empty;
 
         [Required]
         public int Quantity { get; set; }
