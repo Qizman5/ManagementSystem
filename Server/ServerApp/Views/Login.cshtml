@@ -1,0 +1,32 @@
+@{
+    ViewData["Title"] = "Вхід в адмін-панель";
+}
+
+<div class="container mt-5" style="max-width: 400px;">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title text-center mb-4">Вхід Admin</h3>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @ViewBag.Error
+                </div>
+            }
+
+            <form method="post" action="/auth/login">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Логін</label>
+                    <input type="text" id="username" name="username" class="form-control" required placeholder="Введіть логін" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Пароль</label>
+                    <input type="password" id="password" name="password" class="form-control" required placeholder="Введіть пароль" />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Увійти</button>
+            </form>
+        </div>
+    </div>
+</div>
