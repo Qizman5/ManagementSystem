@@ -1,0 +1,20 @@
+﻿@model ServerApp.Models.User
+@{ ViewData["Title"] = "Видалити користувача"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Видалити користувача</h4>
+            </div>
+            <div class="card-body">
+                <p>Ви дійсно бажаєте видалити користувача <strong>@Model.FullName</strong>?</p>
+                <form asp-action="Delete" method="post" class="d-flex justify-content-between mt-3">
+                    <input type="hidden" asp-for="Id" />
+                    <a asp-action="Index" class="btn btn-secondary">Скасувати</a>
+                    <button type="submit" class="btn btn-danger">Видалити</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

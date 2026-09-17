@@ -1,20 +1,29 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ServerApp.Models
 {
-    [Table("Actions")]
+    [Table("Actions")] // Якщо таблиця в БД має назву Actions
     public class UserAction
     {
         public int Id { get; set; }
 
+        [Required]
         public int UserId { get; set; }
         public User? User { get; set; }
 
+        [Required]
         public int ItemId { get; set; }
         public Item? Item { get; set; }
 
-        public string ActionType { get; set; } = string.Empty;
-        public int QuantityChanged { get; set; }
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        [Required]
+        public string ActionType { get; set; } = string.Empty; // "Прихід" або "Списання"
+
+        [Required]
+        public int Quantity { get; set; }
+
+        public DateTime ActionDate { get; set; } = DateTime.UtcNow;
+
+        public string? Note { get; set; }
     }
 }

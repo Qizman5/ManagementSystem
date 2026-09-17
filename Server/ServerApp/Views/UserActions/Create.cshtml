@@ -1,0 +1,40 @@
+﻿@model ServerApp.Models.UserAction
+@{ ViewData["Title"] = "Зареєструвати операцію"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Зареєструвати дію</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div class="mb-3">
+                        <label asp-for="ActionType" class="form-label">Тип операції</label>
+                        <select asp-for="ActionType" class="form-select">
+                            <option value="Receipt">Receipt (Находження)</option>
+                            <option value="Shipment">Shipment (Списання)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ItemId" class="form-label">Товар</label>
+                        <select asp-for="ItemId" class="form-select" asp-items="ViewBag.ItemId"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UserId" class="form-label">Відповідальний користувач</label>
+                        <select asp-for="UserId" class="form-select" asp-items="ViewBag.UserId"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Quantity" class="form-label">Кількість</label>
+                        <input asp-for="Quantity" type="number" class="form-control" />
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">Скасувати</a>
+                        <button type="submit" class="btn btn-primary">Зберегти</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
