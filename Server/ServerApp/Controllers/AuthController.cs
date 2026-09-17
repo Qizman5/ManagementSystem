@@ -1,82 +1,88 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using ServerApp.Models;
 
 namespace ServerApp.Controllers
 {
-    public class AuthController : Controller
-    {
-        private readonly IConfiguration _configuration;
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
+        public AuthController(AppDbContext context, IConfiguration configuration)
+        {
+            _context = context;
+            _configuration = configuration;
+        }
 
-        // GET: /Auth/Login (Сторінка з формою)
-        [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto model)
+        {
+            if (model == null || string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.Password))
+            {
+                return BadRequest(new { message = "Не вказано логін або пароль." });
+            }
 
-        // POST: /auth/login (Видача JWT-токена)
-        [HttpPost("auth/login")]
-        public IActionResult Login(string username, string password)
-        {
-            // 1. Перевірка адміністратора за кодом з AdminCredentials
-            if (username == AdminCredentials.Username && password == AdminCredentials.Password)
-            {
-                // 2. Генерація JWT-токена
-                var token = GenerateJwtToken(username);
+            // Пошук користувача в таблиці Users за ім'ям
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == model.Username);
 
-                // 3. Збереження токена в Cookie для MVC-авторизації в браузері
-                Response.Cookies.Append("X-Access-Token", token, new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTime.UtcNow.AddHours(2)
-                });
+            // Перевірка існування користувача та пароля 
+            // (Увага: переконайтеся, що у вашій моделі User поле для пароля називається саме Password, 
+            // або змініть на PasswordHash, якщо воно так назване у вашому класі User.cs)
+            if (user == null || user.PasswordHash != model.Password)
+            {
+                return Unauthorized(new { message = "Невірний логін або пароль." });
+            }
 
-                return RedirectToAction("Index", "Home");
-            }
+            // Генерація JWT-токена
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing.");
+            var key = Encoding.UTF8.GetBytes(jwtKey);
 
-            ViewBag.Error = "Невірний логін або пароль!";
-            return View();
-        }
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Role, "User")
+                }),
+                Expires = DateTime.UtcNow.AddHours(3),
+                Issuer = _configuration["Jwt:Issuer"],
+                Audience = _configuration["Jwt:Audience"],
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
 
-        // GET: /auth/logout (Вихід з системи)
-        [HttpGet("auth/logout")]
-        public IActionResult Logout()
-        {
-            Response.Cookies.Delete("X-Access-Token");
-            return RedirectToAction("Login");
-        }
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
 
-        private string GenerateJwtToken(string username)
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            // Зберігаємо токен у захищені Cookie для зручності MVC/клієнта
+            Response.Cookies.Append("X-Access-Token", tokenString, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddHours(3)
+            });
 
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Role, "Admin")
-            };
+            return Ok(new 
+            { 
+                Message = "Успішна авторизація", 
+                Token = tokenString 
+            });
+        }
+    }
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(2),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-    }
+    public class LoginDto
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
 }
