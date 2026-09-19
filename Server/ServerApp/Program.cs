@@ -9,10 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. Додаємо підтримку MVC (Контролери + Razor Views)
 builder.Services.AddControllersWithViews();
 
-// 2. Підключення до бази даних MySQL
+// 2. Підключення до бази даних MySQL (Pomelo)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 30))));
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 // 3. Зчитування конфігурації JWT
 var jwtKey = builder.Configuration["Jwt:Key"] 
@@ -98,7 +98,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Middleware аутентифікації та авторизації (порядок важливий!)
+// Middleware аутентифікації та авторизації
 app.UseAuthentication();
 app.UseAuthorization();
 
