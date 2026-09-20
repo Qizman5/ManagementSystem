@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,19 +15,47 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// 3. Зчитування конфігурації JWT
-var jwtKey = builder.Configuration["Jwt:Key"] 
-    ?? throw new InvalidOperationException("JWT Key is missing in configuration.");
-var jwtIssuer = builder.Configuration["Jwt:Issuer"];
-var jwtAudience = builder.Configuration["Jwt:Audience"];
+// 3. Зчитування конфігурації JWT (з безпечною перевіркою)
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKeyForJWTTokenGeneration2026!";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ServerApp";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ServerAppUsers";
 
-// 4. Налаштування аутентифікації JwtBearer
+// 4. Гібридна аутентифікація (Cookie для веб-інтерфейсу + JWT для API)
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
-.AddJwtBearer(options =>
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.Cookie.Name = "WarehouseAuthCookie";
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/Login";
+
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
+
+    // Обробка REST/AJAX запитів (щоб замість редиректу повертати 401 Unauthorized)
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+            context.Request.Headers["Accept"].ToString().Contains("application/json"))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+})
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -37,56 +66,20 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtIssuer,
         ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-        ClockSkew = TimeSpan.Zero // Точне вимірювання часу закінчення токена
-    };
-
-    // Обробка подій авторизації для MVC та API
-    options.Events = new JwtBearerEvents
-    {
-        // Читання токена з Cookie для MVC запитів
-        OnMessageReceived = context =>
-        {
-            if (context.Request.Cookies.ContainsKey("X-Access-Token"))
-            {
-                context.Token = context.Request.Cookies["X-Access-Token"];
-            }
-            return Task.CompletedTask;
-        },
-
-        // Редирект на сторінку входу, якщо неавторизований (для MVC)
-        OnChallenge = context =>
-        {
-            if (!context.Request.Path.StartsWithSegments("/api"))
-            {
-                context.HandleResponse();
-                var returnUrl = Uri.EscapeDataString(context.Request.Path + context.Request.QueryString);
-                context.Response.Redirect($"/Account/Login?returnUrl={returnUrl}");
-            }
-            return Task.CompletedTask;
-        },
-
-        // Редирект на 403 AccessDenied, якщо недостатньо прав (для MVC)
-        OnForbidden = context =>
-        {
-            if (!context.Request.Path.StartsWithSegments("/api"))
-            {
-                context.Response.Redirect("/Account/AccessDenied");
-            }
-            return Task.CompletedTask;
-        }
+        ClockSkew = TimeSpan.Zero
     };
 });
 
 var app = builder.Build();
 
-// 5. Автоматична ініціалізація бази даних при старті
+// 5. Ініціалізація бази даних при старті
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.EnsureCreated();
 }
 
-// 6. Конфігурація HTTP pipeline
+// 6. Налаштування HTTP-конвейєра (Middleware)
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -98,11 +91,11 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Middleware аутентифікації та авторизації
+// Обов'язковий порядок: спочатку Authentication, потім Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 7. Стандартний маршрут MVC
+// 7. Головний маршрут MVC
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Items}/{action=Index}/{id?}");

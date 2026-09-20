@@ -1,25 +1,38 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ServerApp.Models
 {
+    [Table("Workers")] // Прив'язуємо модель до таблиці Workers
     public class User
     {
+        [Key]
+        [Column("ID")] // Колонка в БД називається ID
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Логін обов'язковий")]
+        [Column("Name")] // Колонка Name в БД використовується як Username/FullName
+        [Required(ErrorMessage = "Ім'я обов'язкове")]
         public string Username { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "ПІБ обов'язкове")]
-        public string FullName { get; set; } = string.Empty;
+        [NotMapped] // Використовується в коді C# як псевдонім для Username (щоб не виникало помилок EF)
+        public string FullName 
+        { 
+            get => Username; 
+            set => Username = value; 
+        }
 
-        [Required(ErrorMessage = "Email обов'язковий"), EmailAddress(ErrorMessage = "Некоректний формат Email")]
+        [Column("Email")]
+        [Required(ErrorMessage = "Email обов'язковий")]
+        [EmailAddress(ErrorMessage = "Некоректний формат Email")]
         public string Email { get; set; } = string.Empty;
 
+        [Column("PasswordHash")]
         public string PasswordHash { get; set; } = string.Empty;
 
-        public string Role { get; set; } = "Worker"; // Worker, Manager, Admin
+        [NotMapped] // Якщо колонки Role немає в таблиці Workers, робимо значення за замовчуванням
+        public string Role { get; set; } = "Worker";
 
-        // Навігаційна властивість для зв'язку з таблицею дій
+        // Навігаційна властивість
         public ICollection<UserAction> Actions { get; set; } = new List<UserAction>();
     }
 }

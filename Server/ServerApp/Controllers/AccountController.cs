@@ -1,27 +1,24 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using ServerApp.Models;
 
 namespace ServerApp.Controllers
 {
-    [AllowAnonymous]
     public class AccountController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly IConfiguration _configuration;
 
-        public AccountController(AppDbContext context, IConfiguration configuration)
+        public AccountController(AppDbContext context)
         {
             _context = context;
-            _configuration = configuration;
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult Login(string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
@@ -29,22 +26,38 @@ namespace ServerApp.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(string username, string password, string? returnUrl = null)
+        public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-
-            // Перевірка наявності користувача (у реальному проєкті слід використовувати хешування паролів)
-            if (user == null)
+            if (!ModelState.IsValid)
             {
-                ModelState.AddModelError(string.Empty, "Невірний логін або пароль.");
-                return View();
+                ViewData["ReturnUrl"] = returnUrl;
+                return View(model);
             }
 
-            // Генерування JWT-токена
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!);
+            // Пошук користувача за Username або Email у таблиці Workers
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == model.Username || u.Email == model.Username);
 
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Користувача з таким логіном не знайдено");
+                ViewData["ReturnUrl"] = returnUrl;
+                return View(model);
+            }
+
+            // Перевірка пароля (тимчасове пряме порівняння для тесту)
+            bool isPasswordValid = user.PasswordHash == model.Password;
+
+            if (!isPasswordValid)
+            {
+                ModelState.AddModelError("", "Невірний пароль");
+                ViewData["ReturnUrl"] = returnUrl;
+                return View(model);
+            }
+
+            // Формування прав (Claims)
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -52,26 +65,12 @@ namespace ServerApp.Controllers
                 new Claim(ClaimTypes.Role, user.Role ?? "Worker")
             };
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(8),
-                Issuer = _configuration["Jwt:Issuer"],
-                Audience = _configuration["Jwt:Audience"],
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
-
-            // Запис токена у HttpOnly Cookie
-            Response.Cookies.Append("X-Access-Token", tokenString, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddHours(8)
-            });
+            // Запис кукі авторизації в браузер
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity));
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
@@ -82,17 +81,11 @@ namespace ServerApp.Controllers
         }
 
         [HttpPost]
-        [Authorize]
-        public IActionResult Logout()
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
         {
-            Response.Cookies.Delete("X-Access-Token");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login", "Account");
-        }
-
-        [HttpGet]
-        public IActionResult AccessDenied()
-        {
-            return View();
         }
     }
 }

@@ -13,7 +13,10 @@
                 </h4>
             </div>
             <div class="card-body p-4">
-                <form asp-action="Login" method="post" autocomplete="off">
+                <form asp-controller="Account" asp-action="Login" method="post" autocomplete="off">
+                    @* 1. ВАЖЛИВО: Токен має бути ВСЕРЕДИНІ тегу <form> *@
+                    @Html.AntiForgeryToken()
+
                     <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
 
                     @if (!ViewData.ModelState.IsValid)
