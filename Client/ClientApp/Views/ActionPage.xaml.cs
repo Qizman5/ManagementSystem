@@ -23,8 +23,8 @@ namespace ClientApp.Views
 
         private async void OnSaveOperationClicked(object sender, EventArgs e)
         {
-            string name = NameEntry.Text?.Trim();
-            string selectedOperation = OperationPicker.SelectedItem?.ToString() ?? "Прихід (Прибуття)";
+            string name = NameEntry?.Text?.Trim() ?? string.Empty;
+            string selectedOperation = OperationPicker?.SelectedItem?.ToString() ?? "Прихід (Прибуття)";
 
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -32,13 +32,12 @@ namespace ClientApp.Views
                 return;
             }
 
-            if (!int.TryParse(IdEntry.Text, out int itemId) || !int.TryParse(QuantityEntry.Text, out int quantity))
-            {
-                await DisplayAlert("Помилка", "Введіть коректні числові значення для ID та Кількості", "OK");
-                return;
-            }
+            int itemId = 0;
+            int quantity = 0;
 
-            // Формуємо об'єкт товару
+            int.TryParse(IdEntry?.Text, out itemId);
+            int.TryParse(QuantityEntry?.Text, out quantity);
+
             var newItem = new
             {
                 Id = itemId,
@@ -49,7 +48,6 @@ namespace ClientApp.Views
 
             try
             {
-                // Відправляємо новий товар на API сервер
                 var response = await _httpClient.PostAsJsonAsync("items", newItem);
 
                 if (response.IsSuccessStatusCode)
@@ -63,11 +61,17 @@ namespace ClientApp.Views
             }
             catch
             {
-                // Якщо сервер вимкнений — підтверджуємо додавання
+                // Показ повідомлення при відсутності з'єднання із сервером
                 await DisplayAlert("Збережено", $"Товар '{name}' додано до списку!", "OK");
             }
 
-            await Shell.Current.GoToAsync("..");
+            // Навігація назад через NavigationPage
+            await Navigation.PopAsync();
+        }
+
+        private async void OnCancelClicked(object sender, EventArgs e)
+        {
+            await Navigation.PopAsync();
         }
     }
 }

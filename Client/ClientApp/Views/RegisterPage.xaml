@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="ClientApp.Views.LoginPage"
-             Title="Авторизація"
-             NavigationPage.HasNavigationBar="False"
+             x:Class="ClientApp.Views.RegisterPage"
+             Title="Реєстрація"
              BackgroundColor="#F4F5F9">
 
     <ScrollView>
@@ -12,25 +11,25 @@
             <!-- Логотип WMS -->
             <Border StrokeShape="RoundRectangle 20"
                     BackgroundColor="#512BD4"
-                    HeightRequest="80"
-                    WidthRequest="80"
+                    HeightRequest="70"
+                    WidthRequest="70"
                     HorizontalOptions="Center"
                     StrokeThickness="0">
                 <Label Text="WMS"
                        TextColor="White"
                        FontAttributes="Bold"
-                       FontSize="20"
+                       FontSize="18"
                        HorizontalOptions="Center"
                        VerticalOptions="Center" />
             </Border>
 
-            <Label Text="Ласкаво просимо"
+            <Label Text="Реєстрація"
                    FontSize="24"
                    FontAttributes="Bold"
                    TextColor="#1E1E2C"
                    HorizontalOptions="Center" />
 
-            <Label Text="Увійдіть для доступу до системи"
+            <Label Text="Створіть новий обліковий запис"
                    FontSize="14"
                    TextColor="#666666"
                    HorizontalOptions="Center"
@@ -40,8 +39,8 @@
             <VerticalStackLayout Spacing="6">
                 <Label Text="Email:" FontAttributes="Bold" TextColor="#333333" />
                 <Border StrokeShape="RoundRectangle 8" Stroke="#E0E0E0" Padding="8,0">
-                    <Entry x:Name="EmailEntry"
-                           Text="arotar2005@gmail.com"
+                    <Entry x:Name="RegEmailEntry"
+                           Placeholder="example@gmail.com"
                            Keyboard="Email" />
                 </Border>
             </VerticalStackLayout>
@@ -50,15 +49,25 @@
             <VerticalStackLayout Spacing="6">
                 <Label Text="Пароль:" FontAttributes="Bold" TextColor="#333333" />
                 <Border StrokeShape="RoundRectangle 8" Stroke="#E0E0E0" Padding="8,0">
-                    <Entry x:Name="PasswordEntry"
+                    <Entry x:Name="RegPasswordEntry"
                            IsPassword="True"
-                           Text="1234567890" />
+                           Placeholder="••••••••••••" />
                 </Border>
             </VerticalStackLayout>
 
-            <!-- Кнопка Увійти -->
-            <Button Text="Увійти"
-                    Clicked="OnLoginClicked"
+            <!-- Підтвердження пароля -->
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Підтвердіть пароль:" FontAttributes="Bold" TextColor="#333333" />
+                <Border StrokeShape="RoundRectangle 8" Stroke="#E0E0E0" Padding="8,0">
+                    <Entry x:Name="ConfirmPasswordEntry"
+                           IsPassword="True"
+                           Placeholder="••••••••••••" />
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Кнопка Реєстрація -->
+            <Button Text="Зареєструватися"
+                    Clicked="OnRegisterClicked"
                     BackgroundColor="#512BD4"
                     TextColor="White"
                     FontAttributes="Bold"
@@ -66,11 +75,11 @@
                     HeightRequest="48"
                     Margin="0,15,0,0" />
 
-            <!-- Перехід на Реєстрацію -->
+            <!-- Перехід назад на Увійти -->
             <HorizontalStackLayout HorizontalOptions="Center" Spacing="5" Margin="0,10,0,0">
-                <Label Text="Немає акаунту?" TextColor="#666666" VerticalOptions="Center" />
-                <Button Text="Зареєструватися"
-                        Clicked="OnRegisterRedirectClicked"
+                <Label Text="Вже є акаунт?" TextColor="#666666" VerticalOptions="Center" />
+                <Button Text="Увійти"
+                        Clicked="OnLoginRedirectClicked"
                         BackgroundColor="Transparent"
                         TextColor="#512BD4"
                         FontAttributes="Bold"

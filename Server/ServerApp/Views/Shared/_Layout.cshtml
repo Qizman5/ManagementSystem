@@ -3,26 +3,126 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Warehouse Admin</title>
-    
-    <!-- Bootstrap 5 CSS + Icons -->
+    <title>@ViewData["Title"] - WMS Admin</title>
+
+    <!-- Google Fonts, Bootstrap 5 та Bootstrap Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: #F4F5F9;
+            color: #1E1E2C;
+            min-height: 100vh;
+        }
+
+        .wms-navbar {
+            background: #FFFFFF;
+            border-bottom: 1px solid #EAEAEF;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            padding: 12px 0;
+        }
+
+        .logo-badge {
+            background-color: #512BD4;
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: #555566 !important;
+            padding: 8px 16px !important;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #512BD4 !important;
+            background-color: #F0EDFD;
+        }
+
+        .card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: #FFFFFF;
+            padding: 20px 24px;
+            border-bottom: 1px solid #F0F0F5;
+            font-weight: 600;
+            font-size: 16px;
+            color: #1E1E2C;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background-color: #FAFAFC;
+            padding: 14px 24px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #F0F0F5;
+        }
+
+        .table td {
+            padding: 16px 24px;
+            font-size: 14px;
+            color: #333333;
+            border-bottom: 1px solid #F0F0F5;
+            vertical-align: middle;
+        }
+
+        .btn-purple {
+            background-color: #512BD4;
+            color: #FFFFFF;
+            border: none;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 8px 16px;
+        }
+
+        .btn-purple:hover {
+            background-color: #4020A8;
+            color: #FFFFFF;
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
+
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-4 shadow-sm">
+        <nav class="navbar navbar-expand-lg wms-navbar mb-4">
             <div class="container">
-                <a class="navbar-brand fw-bold" asp-controller="Items" asp-action="Index">
-                    <i class="bi bi-box-seam me-2"></i>WMS Admin
+                <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-dark me-4" asp-controller="Items" asp-action="Index">
+                    <span class="logo-badge">WMS</span>
+                    <span>Admin</span>
                 </a>
-                
+
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                
-                <div class="collapse navbar-collapse id="mainNavbar" class="d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Items" asp-action="Index">
                                 <i class="bi bi-boxes me-1"></i> Товари
@@ -38,26 +138,33 @@
                                 <i class="bi bi-journal-text me-1"></i> Операції
                             </a>
                         </li>
+
+                        <!-- Кнопка адмінки відображається тільки для ролі Admin -->
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link fw-bold text-primary" asp-controller="Admin" asp-action="Index">
+                                    <i class="bi bi-shield-lock me-1"></i> Адмінка
+                                </a>
+                            </li>
+                        }
                     </ul>
 
-                    <!-- Правильно оформлена форма для POST-запиту виходу -->
-                    <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-outline-danger btn-sm">
-                                    <i class="bi bi-box-arrow-right me-1"></i> Вийти
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
+                    <div class="d-flex align-items-center gap-2">
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger btn-sm px-3 py-2 fw-semibold">
+                                <i class="bi bi-box-arrow-right me-1"></i> Вийти
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
 
-    <div class="container">
-        <main role="main" class="pb-3">
+    <div class="container pb-5">
+        <main role="main">
             @RenderBody()
         </main>
     </div>

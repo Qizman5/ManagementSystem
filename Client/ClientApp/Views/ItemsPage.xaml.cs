@@ -8,7 +8,6 @@ namespace ClientApp.Views
     {
         private readonly ItemsViewModel _viewModel;
 
-        // Конструктор без параметрів
         public ItemsPage()
         {
             InitializeComponent();
@@ -16,7 +15,6 @@ namespace ClientApp.Views
             BindingContext = _viewModel;
         }
 
-        // Конструктор для Dependency Injection
         public ItemsPage(ItemsViewModel viewModel)
         {
             InitializeComponent();
@@ -27,8 +25,7 @@ namespace ClientApp.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            
-            // Автоматично завантажуємо та оновлюємо список товарів при відкритті сторінки
+
             if (BindingContext is ItemsViewModel vm)
             {
                 await vm.LoadItemsAsync();
@@ -37,8 +34,8 @@ namespace ClientApp.Views
 
         private async void OnCreateOperationClicked(object sender, EventArgs e)
         {
-            // Перехід на сторінку створення товару/операції
-            await Shell.Current.GoToAsync(nameof(ActionPage));
+            // Навігація через стек NavigationPage
+            await Navigation.PushAsync(new ActionPage());
         }
     }
 }
