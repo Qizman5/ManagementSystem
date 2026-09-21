@@ -1,31 +1,30 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:ClientApp.ViewModels"
              xmlns:models="clr-namespace:ClientApp.Models"
              x:Class="ClientApp.Views.ItemsPage"
-             Title="Òîâàðè íà ñêëàä³">
-    <BindingContext>
-        <vm:ItemsViewModel />
-    </BindingContext>
-    <Grid RowDefinitions="Auto,*">
-        <Button Grid.Row="0" Text="+ Ñòâîðèòè îïåðàö³þ" Command="{Binding GoToActionCommand}" Margin="10" BackgroundColor="#2E7D32" TextColor="White" />
-        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsRefreshing}" Command="{Binding LoadMockItemsCommand}">
-            <CollectionView ItemsSource="{Binding Items}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:Item">
-                        <Frame Margin="10,5" Padding="15" CornerRadius="8">
+             Title="Ð¡Ð¿Ð¸ÑÐ¾Ðº Ñ‚Ð¾Ð²Ð°Ñ€Ñ–Ð²">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="15">
+        <Button Grid.Row="0" Text="ÐžÐ½Ð¾Ð²Ð¸Ñ‚Ð¸ ÑÐ¿Ð¸ÑÐ¾Ðº" Command="{Binding LoadItemsCommand}" Margin="0,0,0,10" />
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Items}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Item">
+                    <Frame Margin="0,5" Padding="10" CornerRadius="8">
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" />
+                            <Label Text="{Binding Description}" FontSize="14" TextColor="Gray" />
                             <HorizontalStackLayout Spacing="15">
-                                <VerticalStackLayout VerticalOptions="Center">
-                                    <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
-                                    <Label Text="{Binding Quantity, StringFormat='Ê³ëüê³ñòü: {0} øò.'}" TextColor="Gray" />
-                                </VerticalStackLayout>
-                                <Label Text="{Binding Price, StringFormat='{0:C}'}" FontSize="18" TextColor="#1E88E5" VerticalOptions="Center" HorizontalOptions="EndAndExpand" />
+                                <Label Text="{Binding Quantity, StringFormat='ÐšÑ–Ð»ÑŒÐºÑ–ÑÑ‚ÑŒ: {0}'}" />
+                                <Label Text="{Binding Price, StringFormat='Ð¦Ñ–Ð½Ð°: {0:C}'}" FontAttributes="Bold" />
                             </HorizontalStackLayout>
-                        </Frame>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </RefreshView>
+                        </VerticalStackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Button Grid.Row="2" Text="Ð¡Ñ‚Ð²Ð¾Ñ€Ð¸Ñ‚Ð¸ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ñ–ÑŽ" Command="{Binding GoToActionCommand}" Margin="0,10,0,0" />
     </Grid>
 </ContentPage>

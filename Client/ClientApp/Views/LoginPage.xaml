@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:ClientApp.ViewModels"
              x:Class="ClientApp.Views.LoginPage"
-             Title="Àâòîðèçàö³ÿ">
-    <BindingContext>
-        <vm:LoginViewModel />
-    </BindingContext>
-    <VerticalStackLayout Padding="30" Spacing="15" VerticalOptions="Center">
-        <Label Text="WMS Mobile" FontSize="32" FontAttributes="Bold" HorizontalOptions="Center" TextColor="#1E88E5" />
-        <Entry Placeholder="Email / Ëîã³í" Text="{Binding Email}" Keyboard="Email" />
-        <Entry Placeholder="Ïàðîëü" IsPassword="True" Text="{Binding Password}" />
-        <Button Text="Óâ³éòè" Command="{Binding LoginCommand}" BackgroundColor="#1E88E5" TextColor="White" HeightRequest="50" />
-        <Label Text="{Binding ErrorMessage}" TextColor="Red" HorizontalOptions="Center" />
-    </VerticalStackLayout>
+             Title="ÐÐ²Ñ‚Ð¾Ñ€Ð¸Ð·Ð°Ñ†Ñ–Ñ">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30" Spacing="15" VerticalOptions="Center">
+            <Label Text="Ð’Ñ…Ñ–Ð´ Ñƒ WMS" FontSize="26" FontAttributes="Bold" HorizontalOptions="Center" />
+
+            <Entry Placeholder="Email" Text="{Binding Email}" Keyboard="Email" />
+            <Entry Placeholder="ÐŸÐ°Ñ€Ð¾Ð»ÑŒ" Text="{Binding Password}" IsPassword="True" />
+
+            <Label Text="{Binding ErrorMessage}" TextColor="Red" />
+
+            <Button Text="Ð£Ð²Ñ–Ð¹Ñ‚Ð¸" Command="{Binding LoginCommand}" />
+            
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" HorizontalOptions="Center" />
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

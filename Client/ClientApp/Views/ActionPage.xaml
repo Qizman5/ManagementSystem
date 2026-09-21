@@ -1,17 +1,30 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:ClientApp.ViewModels"
              x:Class="ClientApp.Views.ActionPage"
-             Title="Íîâà îïåðàö³ÿ">
-    <BindingContext>
-        <vm:ActionViewModel />
-    </BindingContext>
-    <VerticalStackLayout Padding="20" Spacing="15">
-        <Label Text="Ñòâîðåííÿ ñêëàäñüêî¿ îïåðàö³¿" FontSize="20" FontAttributes="Bold" />
-        <Entry Placeholder="ID Òîâàðó" Text="{Binding ProductId}" Keyboard="Numeric" />
-        <Entry Placeholder="Ñòàòóñ" Text="{Binding Status}" />
-        <Button Text="Â³äïðàâèòè" Command="{Binding CreateActionCommand}" BackgroundColor="#1E88E5" TextColor="White" />
-        <Label Text="{Binding Message}" TextColor="Green" HorizontalOptions="Center" />
-    </VerticalStackLayout>
+             Title="Ð¡Ñ‚Ð²Ð¾Ñ€ÐµÐ½Ð½Ñ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ñ–Ñ—">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="ÐÐ¾Ð²Ð° ÑÐºÐ»Ð°Ð´ÑÑŒÐºÐ° Ð¾Ð¿ÐµÑ€Ð°Ñ†Ñ–Ñ" FontSize="20" FontAttributes="Bold" />
+
+            <Label Text="Ð¢Ð¸Ð¿ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ñ–Ñ—:" />
+            <Picker SelectedItem="{Binding ActionType}">
+                <Picker.Items>
+                    <x:String>ÐŸÑ€Ð¸Ñ…Ñ–Ð´</x:String>
+                    <x:String>Ð’Ð¸Ñ‚Ñ€Ð°Ñ‚Ð°</x:String>
+                </Picker.Items>
+            </Picker>
+
+            <Label Text="ID Ð¢Ð¾Ð²Ð°Ñ€Ñƒ:" />
+            <Entry Text="{Binding ItemId}" Keyboard="Numeric" />
+
+            <Label Text="ÐšÑ–Ð»ÑŒÐºÑ–ÑÑ‚ÑŒ:" />
+            <Entry Text="{Binding Quantity}" Keyboard="Numeric" />
+
+            <Button Text="Ð—Ð±ÐµÑ€ÐµÐ³Ñ‚Ð¸" Command="{Binding SaveActionCommand}" />
+
+            <Label Text="{Binding StatusMessage}" TextColor="Green" HorizontalOptions="Center" />
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
