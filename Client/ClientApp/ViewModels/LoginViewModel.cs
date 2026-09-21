@@ -1,71 +1,98 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Microsoft.Maui.Controls;
 using System;
-using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using ClientApp.Services;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 
 namespace ClientApp.ViewModels
 {
-    public partial class LoginViewModel : ObservableObject
+    public class LoginViewModel : BaseViewModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly ApiService _apiService;
 
-        [ObservableProperty]
-        private string _email = string.Empty;
-
-        [ObservableProperty]
-        private string _password = string.Empty;
-
-        [ObservableProperty]
-        private string _errorMessage = string.Empty;
-
-        public LoginViewModel(HttpClient httpClient)
+        private string _username = string.Empty;
+        public string Username
         {
-            _httpClient = httpClient;
+            get => _username;
+            set
+            {
+                _username = value;
+                OnPropertyChanged();
+            }
         }
 
-        [RelayCommand]
-        private async Task LoginAsync()
+        private string _password = string.Empty;
+        public string Password
         {
-            var cleanEmail = Email?.Trim() ?? string.Empty;
+            get => _password;
+            set
+            {
+                _password = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                _isBusy = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand LoginCommand { get; }
+
+        public LoginViewModel()
+        {
+            _apiService = new ApiService();
+            LoginCommand = new Command(async () => await ExecuteLoginAsync());
+        }
+
+        private async Task ExecuteLoginAsync()
+        {
+            if (IsBusy) return;
+
+            var cleanUsername = Username?.Trim() ?? string.Empty;
             var cleanPassword = Password?.Trim() ?? string.Empty;
 
-            if (string.IsNullOrWhiteSpace(cleanEmail) || string.IsNullOrWhiteSpace(cleanPassword))
+            if (string.IsNullOrWhiteSpace(cleanUsername) || string.IsNullOrWhiteSpace(cleanPassword))
             {
-                ErrorMessage = "Будь ласка, введіть Email та пароль";
-                return;
-            }
-
-            // Перевірка конкретного облікового запису
-            if (cleanEmail != "arotar2005@gmail.com" || cleanPassword != "9wYrTyWftWLMf9")
-            {
-                ErrorMessage = "Невірний Email або пароль!";
+                await Shell.Current.DisplayAlert("Помилка", "Будь ласка, введіть логін та пароль", "OK");
                 return;
             }
 
             try
             {
-                // Відправляємо авторизаційні дані на сервер для отримання Cookie-сесії
-                var content = new FormUrlEncodedContent(new[]
+                IsBusy = true;
+
+                // 1. Запит до API (POST /api/auth/login)
+                string? token = await _apiService.LoginAsync(cleanUsername, cleanPassword);
+
+                if (!string.IsNullOrEmpty(token))
                 {
-                    new KeyValuePair<string, string>("Username", cleanEmail),
-                    new KeyValuePair<string, string>("Password", cleanPassword)
-                });
+                    // 2. Збереження JWT-токена у Preferences
+                    Preferences.Set("jwt_token", token);
 
-                var response = await _httpClient.PostAsync("Account/Login", content);
-
-                // Переходимо на сторінку товарів
-                ErrorMessage = string.Empty;
-                await Shell.Current.GoToAsync("//ItemsPage");
+                    // 3. Успішний перехід до сторінки товарів
+                    await Shell.Current.GoToAsync("//ItemsPage");
+                }
+                else
+                {
+                    await Shell.Current.DisplayAlert("Помилка входу", "Невірний логін або пароль", "OK");
+                }
             }
             catch (Exception ex)
             {
-                // Логуємо помилку для відлагодження (змінна ex використовується)
-                System.Diagnostics.Debug.WriteLine($"Помилка авторизації: {ex.Message}");
-                ErrorMessage = string.Empty;
-                await Shell.Current.GoToAsync("//ItemsPage");
+                System.Diagnostics.Debug.WriteLine($"[LoginViewModel Exception]: {ex.Message}");
+                await Shell.Current.DisplayAlert("Помилка мережі", "Не вдалося з'єднатися з сервером", "OK");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
     }
