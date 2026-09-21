@@ -17,19 +17,21 @@ namespace ClientApp.ViewModels
         [RelayCommand]
         private async Task LoginAsync()
         {
-            // Видаляємо зайві пробіли з початку і кінця
-            var cleanEmail = Email?.Trim() ?? string.Empty;
-            var cleanPassword = Password?.Trim() ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(cleanEmail) || string.IsNullOrWhiteSpace(cleanPassword))
+            // Перевірка порожніх полів
+            if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
             {
-                ErrorMessage = "Будь ласка, заповніть усі поля!";
+                ErrorMessage = "Будь ласка, введіть Email та пароль";
+                return;
+            }
+
+            // Перевірка конкретних даних входу
+            if (Email != "arotar2005@gmail.com" || Password != "9wYrTyWftWLMf9")
+            {
+                ErrorMessage = "Невірний Email або пароль!";
                 return;
             }
 
             ErrorMessage = string.Empty;
-            
-            // Прямий перехід на сторінку товарів
             await Shell.Current.GoToAsync("//ItemsPage");
         }
     }
