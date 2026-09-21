@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-
 using CommunityToolkit.Mvvm.Input;
 
 namespace ClientApp.ViewModels
@@ -18,9 +17,17 @@ namespace ClientApp.ViewModels
         [RelayCommand]
         private async Task LoginAsync()
         {
+            // Перевірка порожніх полів
             if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
             {
-                ErrorMessage = "���� �����, ������ Email �� ������";
+                ErrorMessage = "Будь ласка, введіть Email та пароль";
+                return;
+            }
+
+            // Перевірка конкретних даних входу
+            if (Email != "/* arotar2005@gmail.com */" || Password != "9wYrTyWftWLMf9")
+            {
+                ErrorMessage = "Невірний Email або пароль!";
                 return;
             }
 
