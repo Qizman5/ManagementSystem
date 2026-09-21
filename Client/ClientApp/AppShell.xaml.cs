@@ -1,9 +1,10 @@
-﻿namespace ClientApp;
-
-public partial class AppShell : Shell
+namespace ClientApp
 {
-	public AppShell()
-	{
-		InitializeComponent();
-	}
+    public partial class AppShell : Shell
+    {
+        public AppShell()
+        {
+            InitializeComponent();
+        }
+    }
 }

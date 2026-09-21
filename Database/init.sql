@@ -1,48 +1,63 @@
--- Створення таблиці Users
-CREATE DATABASE IF NOT EXISTS WarehouseMS;
-USE WarehouseMS;
--- 2. Створення таблиці Users
-CREATE TABLE IF NOT EXISTS Users (
+CREATE DATABASE IF NOT EXISTS WarehouseDB;
+USE WarehouseDB;
+
+-- 1. Створення таблиці Workers (користувачі системи)
+CREATE TABLE IF NOT EXISTS Workers (
     ID INT AUTO_INCREMENT PRIMARY KEY,
     Name VARCHAR(100) NOT NULL,
+    Username VARCHAR(100) NULL,
+    FullName VARCHAR(255) NULL,
     Email VARCHAR(100) NOT NULL UNIQUE,
-    PasswordHash VARCHAR(256) NOT NULL
+    PasswordHash VARCHAR(255) NOT NULL,
+    Role VARCHAR(50) NOT NULL DEFAULT 'Worker'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 3. Створення таблиці Items
-CREATE TABLE IF NOT EXISTS Items (
+-- 2. Створення таблиці Products (товари на складі)
+CREATE TABLE IF NOT EXISTS Products (
     ID INT AUTO_INCREMENT PRIMARY KEY,
     Name VARCHAR(150) NOT NULL,
     Quantity INT NOT NULL DEFAULT 0,
-    Price DECIMAL(18, 2) NOT NULL DEFAULT 0.00,
-    UserID INT NOT NULL,
-    CONSTRAINT FK_Items_Users FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE
+    Price DECIMAL(18,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 4. Створення таблиці Actions
-CREATE TABLE IF NOT EXISTS Actions (
+-- 3. Створення таблиці Orders (дії/замовлення користувачів)
+CREATE TABLE IF NOT EXISTS Orders (
     ID INT AUTO_INCREMENT PRIMARY KEY,
-    UserID INT NOT NULL,
-    ItemID INT NOT NULL,
-    ActionDetails VARCHAR(255) NOT NULL,
-    Status VARCHAR(50) NOT NULL,
-    CONSTRAINT FK_Actions_Users FOREIGN KEY (UserID) REFERENCES Users(ID),
-    CONSTRAINT FK_Actions_Items FOREIGN KEY (ItemID) REFERENCES Items(ID) ON DELETE CASCADE
+    WorkerID INT NOT NULL,
+    ProductID INT NOT NULL,
+    OrderDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+    CONSTRAINT FK_Orders_Workers FOREIGN KEY (WorkerID) REFERENCES Workers(ID) ON DELETE CASCADE,
+    CONSTRAINT FK_Orders_Products FOREIGN KEY (ProductID) REFERENCES Products(ID) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 5. Тестові дані: Users
-INSERT INTO Users (Name, Email, PasswordHash) VALUES
-('Олексій Іванов', 'o.ivanov@chnu.edu.ua', 'hash_pass_123'),
-('Марія Петренко', 'm.petrenko@chnu.edu.ua', 'hash_pass_456');
+-- 4. Створення індексів (якщо ще не створені)
+CREATE INDEX IX_Workers_Email ON Workers(Email);
+CREATE INDEX IX_Orders_WorkerID ON Orders(WorkerID);
+CREATE INDEX IX_Orders_ProductID ON Orders(ProductID);
 
--- 6. Тестові дані: Items
-INSERT INTO Items (Name, Quantity, Price, UserID) VALUES
-('Сканер штрих-кодів Zebra', 15, 4500.00, 1),
-('Принтер етикеток Xprinter', 8, 3200.50, 1),
-('Складський стелаж Heavy 200', 4, 8900.00, 2);
+-- 5. Очищення та вставка нових оновлених даних
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE Orders;
+TRUNCATE TABLE Products;
+TRUNCATE TABLE Workers;
+SET FOREIGN_KEY_CHECKS = 1;
 
--- 7. Тестові дані: Actions
-INSERT INTO Actions (UserID, ItemID, ActionDetails, Status) VALUES
-(1, 1, 'Прибуття нової партії на склад', 'Completed'),
-(2, 3, 'Інвентаризація та перевірка цілісності', 'In Progress'),
-(1, 2, 'Списання пошкодженого пристрою', 'Pending');
+-- Вставка користувачів (з новими поштами, логинами та паролем '0000')
+INSERT INTO Workers (Name, Username, FullName, Email, PasswordHash, Role) VALUES 
+('Іван Петренко', 'Іван Петренко', 'Іван Петренко', 'ivanpetrenko124@gmail.com', '0000', 'Admin'),
+('Олена Коваль', 'Олена Коваль', 'Олена Коваль', 'OlenaKoval@gmail.com', '0000', 'Worker');
+
+-- Вставка товарів
+INSERT INTO Products (Name, Quantity, Price) VALUES 
+('Ноутбук Dell XPS 15', 10, 45000.00),
+('Монітор LG 27"', 25, 8500.00),
+('Клавіатура Keychron K2', 50, 3200.00);
+
+-- Вставка замовлень
+INSERT INTO Orders (WorkerID, ProductID, OrderDate, Status) VALUES 
+(1, 1, NOW(), 'Completed'),
+(2, 3, NOW(), 'Pending');
+
+-- 6. Перевірка результату в базі даних
+SELECT ID, Name, Username, FullName, Email, Role, PasswordHash FROM Workers;

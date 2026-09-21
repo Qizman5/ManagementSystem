@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ClientApp.ViewModels"
+             x:Class="ClientApp.Views.LoginPage"
+             Title="Авторизація">
+    <BindingContext>
+        <vm:LoginViewModel />
+    </BindingContext>
+    <VerticalStackLayout Padding="30" Spacing="15" VerticalOptions="Center">
+        <Label Text="WMS Mobile" FontSize="32" FontAttributes="Bold" HorizontalOptions="Center" TextColor="#1E88E5" />
+        <Entry Placeholder="Email / Логін" Text="{Binding Email}" Keyboard="Email" />
+        <Entry Placeholder="Пароль" IsPassword="True" Text="{Binding Password}" />
+        <Button Text="Увійти" Command="{Binding LoginCommand}" BackgroundColor="#1E88E5" TextColor="White" HeightRequest="50" />
+        <Label Text="{Binding ErrorMessage}" TextColor="Red" HorizontalOptions="Center" />
+    </VerticalStackLayout>
+</ContentPage>

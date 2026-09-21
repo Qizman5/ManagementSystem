@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ClientApp.ViewModels"
+             xmlns:models="clr-namespace:ClientApp.Models"
+             x:Class="ClientApp.Views.ItemsPage"
+             Title="Товари на складі">
+    <BindingContext>
+        <vm:ItemsViewModel />
+    </BindingContext>
+    <Grid RowDefinitions="Auto,*">
+        <Button Grid.Row="0" Text="+ Створити операцію" Command="{Binding GoToActionCommand}" Margin="10" BackgroundColor="#2E7D32" TextColor="White" />
+        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsRefreshing}" Command="{Binding LoadMockItemsCommand}">
+            <CollectionView ItemsSource="{Binding Items}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Item">
+                        <Frame Margin="10,5" Padding="15" CornerRadius="8">
+                            <HorizontalStackLayout Spacing="15">
+                                <VerticalStackLayout VerticalOptions="Center">
+                                    <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
+                                    <Label Text="{Binding Quantity, StringFormat='Кількість: {0} шт.'}" TextColor="Gray" />
+                                </VerticalStackLayout>
+                                <Label Text="{Binding Price, StringFormat='{0:C}'}" FontSize="18" TextColor="#1E88E5" VerticalOptions="Center" HorizontalOptions="EndAndExpand" />
+                            </HorizontalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>
