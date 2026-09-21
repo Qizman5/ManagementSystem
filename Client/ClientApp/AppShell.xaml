@@ -6,22 +6,19 @@
     xmlns:views="clr-namespace:ClientApp.Views"
     Title="WMS Mobile">
 
-    <!-- Головна сторінка авторизації -->
     <ShellContent
-        Title="Логін"
+        Title="Авторизація"
         ContentTemplate="{DataTemplate views:LoginPage}"
         Route="LoginPage" />
 
-    <!-- Вкладка/Маршрут для списку товарів -->
     <ShellContent
-        Title="Товари"
+        Title="Список товарів"
         ContentTemplate="{DataTemplate views:ItemsPage}"
         Route="ItemsPage" />
 
-    <!-- Вкладка/Маршрут для створення операцій -->
     <ShellContent
-        Title="Нова операція"
-        ContentTemplate="{DataTemplate views:ActionPage}"
-        Route="ActionPage" />
+        Title="Створення операції"
+        ContentTemplate="{DataTemplate views:CreateOperationPage}"
+        Route="CreateOperationPage" />
 
 </Shell>

@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using ServerApp.Models;
 
 namespace ServerApp.Controllers.Api
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     [Authorize]
+    [EnableRateLimiting("StrictPolicy")] // Підключаємо захист Rate Limiter
     public class ActionsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -25,11 +28,18 @@ namespace ServerApp.Controllers.Api
                 return BadRequest(ModelState);
             }
 
+            // 1. Перевірка на від'ємне значення або нуль для ID товару та кількості
+            if (actionModel.ItemId <= 0)
+            {
+                return BadRequest(new { message = "ID товару має бути додатним числом більше 0." });
+            }
+
             if (actionModel.Quantity <= 0)
             {
                 return BadRequest(new { message = "Кількість товару повинна бути більше 0." });
             }
 
+            // 2. Пошук товару в базі даних
             var item = await _context.Items.FindAsync(actionModel.ItemId);
             if (item == null)
             {
@@ -38,6 +48,7 @@ namespace ServerApp.Controllers.Api
 
             var actionType = actionModel.ActionType?.Trim().ToLower();
 
+            // 3. Обробка списання / відвантаження
             if (actionType == "outcome" || actionType == "списання" || actionType == "shipment")
             {
                 if (item.Quantity < actionModel.Quantity)
@@ -53,6 +64,7 @@ namespace ServerApp.Controllers.Api
                 item.Quantity -= actionModel.Quantity;
                 actionModel.ActionType = "Outcome";
             }
+            // 4. Обробка приходу
             else if (actionType == "income" || actionType == "прихід" || actionType == "receipt")
             {
                 item.Quantity += actionModel.Quantity;
@@ -63,7 +75,7 @@ namespace ServerApp.Controllers.Api
                 return BadRequest(new { message = "Некоректний тип операції. Допустимі значення: 'Income' або 'Outcome'." });
             }
 
-            // Властивість ActionDate замість Timestamp
+            // 5. Фіксація дати та збереження у БД
             actionModel.ActionDate = DateTime.UtcNow;
 
             _context.UserActions.Add(actionModel);

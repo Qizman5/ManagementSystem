@@ -10,20 +10,21 @@
         
         <!-- Кнопка Оновити -->
         <Button Grid.Row="0" 
-                Text="🔄  Оновити список" 
+                Text="↻  Оновити список" 
                 Command="{Binding LoadItemsCommand}" 
                 BackgroundColor="#E8EAF6"
                 TextColor="#3F51B5"
                 FontAttributes="Bold"
+                FontSize="15"
                 CornerRadius="10"
                 HeightRequest="44" />
 
-        <!-- Список товарів у вигляді красивих карток -->
+        <!-- Список товарів -->
         <CollectionView Grid.Row="1" ItemsSource="{Binding Items}">
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
                     <Label Text="📦" FontSize="48" HorizontalOptions="Center" />
-                    <Label Text="Товари відсутні або завантажуються..." TextColor="#757575" FontSize="16" />
+                    <Label Text="Товари відсутні або завантажуються..." TextColor="#757575" FontSize="16" HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
             
@@ -73,9 +74,9 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- Нижня дія -->
+        <!-- Кнопка Нова операція -->
         <Button Grid.Row="2" 
-                Text="➕ Створити нову операцію" 
+                Text="+  Створити нову операцію" 
                 Clicked="OnCreateOperationClicked"
                 BackgroundColor="#512BD4" 
                 TextColor="White" 

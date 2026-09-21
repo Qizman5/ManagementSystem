@@ -13,11 +13,11 @@
                    FontAttributes="Bold" 
                    TextColor="#1E1E2C" />
 
-            <!-- Опис / Тип -->
+            <!-- Вибір типу операції -->
             <VerticalStackLayout Spacing="6">
                 <Label Text="Тип операції:" TextColor="#555" FontAttributes="Bold" FontSize="13" />
                 <Border Stroke="#E0E0E0" StrokeThickness="1" StrokeShape="RoundRectangle 10" BackgroundColor="White" Padding="10,0">
-                    <Picker Title="Оберіть тип операції">
+                    <Picker Title="Оберіть тип операції" TextColor="#1E1E2C">
                         <Picker.ItemsSource>
                             <x:Array Type="{x:Type x:String}">
                                 <x:String>Прихід на склад</x:String>
@@ -29,20 +29,21 @@
                 </Border>
             </VerticalStackLayout>
 
-            <!-- ID Товару -->
+            <!-- Поле ID Товару з захистом від від'ємних значень -->
             <VerticalStackLayout Spacing="6">
                 <Label Text="ID Товару:" TextColor="#555" FontAttributes="Bold" FontSize="13" />
                 <Border Stroke="#E0E0E0" StrokeThickness="1" StrokeShape="RoundRectangle 10" BackgroundColor="White" Padding="12,2">
                     <Entry Text="{Binding ProductId, Mode=TwoWay, UpdateSourceEventName=TextChanged}" 
-                           Placeholder="Введіть числове ID" 
+                           Placeholder="Введіть додатний ID" 
                            Keyboard="Numeric" 
+                           TextChanged="OnNumericEntryTextChanged"
                            TextColor="#1E1E2C" />
                 </Border>
             </VerticalStackLayout>
 
             <!-- Повідомлення стану -->
             <Label Text="{Binding Message}" 
-                   TextColor="#2E7D32" 
+                   TextColor="#E53935" 
                    FontAttributes="Bold" 
                    HorizontalOptions="Center" />
 

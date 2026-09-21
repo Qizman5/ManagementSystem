@@ -20,14 +20,15 @@ namespace ClientApp.ViewModels
         [RelayCommand]
         private async Task CreateActionAsync()
         {
+            // Перевірка на від'ємне значення або нуль
             if (ProductId <= 0)
             {
-                Message = "������ ��������� ID ������!";
+                Message = "ID товару має бути додатним числом!";
                 return;
             }
 
-            Message = $"�������� ��� ������ #{ProductId} ������ ��������!";
-            await Task.Delay(1500);
+            Message = $"Заявку для товару #{ProductId} успішно створено!";
+            await Task.Delay(1000);
             await Shell.Current.GoToAsync("//ItemsPage");
         }
     }
