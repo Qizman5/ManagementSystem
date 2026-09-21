@@ -2,29 +2,77 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ClientApp.Views.ActionPage"
-             Title="Створення операції">
+             Title="Створити операцію / Товар"
+             BackgroundColor="#F4F5F9">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="15">
-            <Label Text="Нова складська операція" FontSize="20" FontAttributes="Bold" />
+        <VerticalStackLayout Padding="24" Spacing="16">
 
-            <Label Text="Тип операції:" />
-            <Picker SelectedItem="{Binding ActionType}">
-                <Picker.Items>
-                    <x:String>Прихід</x:String>
-                    <x:String>Витрата</x:String>
-                </Picker.Items>
-            </Picker>
+            <Label Text="Складська операція" 
+                   FontSize="22" 
+                   FontAttributes="Bold" 
+                   TextColor="#1E1E2C" 
+                   HorizontalOptions="Center" 
+                   Margin="0,10" />
 
-            <Label Text="ID Товару:" />
-            <Entry Text="{Binding ItemId}" Keyboard="Numeric" />
+            <!-- Назва товару -->
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Назва товару:" FontAttributes="Bold" TextColor="#333333" />
+                <Border StrokeShape="RoundRectangle 8" Stroke="#E0E0E0" Padding="8,0">
+                    <Entry x:Name="NameEntry" 
+                           Placeholder="Наприклад: Ноутбук Lenovo" />
+                </Border>
+            </VerticalStackLayout>
 
-            <Label Text="Кількість:" />
-            <Entry Text="{Binding Quantity}" Keyboard="Numeric" />
+            <!-- Тип операції -->
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Тип операції:" FontAttributes="Bold" TextColor="#333333" />
+                <Border StrokeShape="RoundRectangle 8" Stroke="#E0E0E0" Padding="4,0">
+                    <Picker x:Name="OperationPicker" Title="Оберіть тип операції">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Прихід (Прибуття)</x:String>
+                                <x:String>Витрата (Відвантаження)</x:String>
+                                <x:String>Переміщення</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                </Border>
+            </VerticalStackLayout>
 
-            <Button Text="Зберегти" Command="{Binding SaveActionCommand}" />
+            <!-- ID Товару -->
+            <VerticalStackLayout Spacing="6">
+                <Label Text="ID Товару:" FontAttributes="Bold" TextColor="#333333" />
+                <Border StrokeShape="RoundRectangle 8" Stroke="#E0E0E0" Padding="8,0">
+                    <Entry x:Name="IdEntry" 
+                           Placeholder="Введіть цифровий ID" 
+                           Keyboard="Numeric" 
+                           Text="1" />
+                </Border>
+            </VerticalStackLayout>
 
-            <Label Text="{Binding StatusMessage}" TextColor="Green" HorizontalOptions="Center" />
+            <!-- Кількість -->
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Кількість:" FontAttributes="Bold" TextColor="#333333" />
+                <Border StrokeShape="RoundRectangle 8" Stroke="#E0E0E0" Padding="8,0">
+                    <Entry x:Name="QuantityEntry" 
+                           Placeholder="Введіть кількість" 
+                           Keyboard="Numeric" 
+                           Text="1" />
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Кнопка Зберегти -->
+            <Button Text="Зберегти" 
+                    Clicked="OnSaveOperationClicked" 
+                    BackgroundColor="#512BD4" 
+                    TextColor="White" 
+                    FontAttributes="Bold" 
+                    CornerRadius="10" 
+                    HeightRequest="48" 
+                    Margin="0,15,0,0" />
+
         </VerticalStackLayout>
     </ScrollView>
+
 </ContentPage>

@@ -19,7 +19,7 @@
                 CornerRadius="10"
                 HeightRequest="44" />
 
-        <!-- Список товарів -->
+        <!-- Список товарів та складських операцій -->
         <CollectionView Grid.Row="1" ItemsSource="{Binding Items}">
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
@@ -40,34 +40,37 @@
                         </Border.Shadow>
                         
                         <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
-                            <Label Grid.Row="0" Grid.Column="0" 
-                                   Text="{Binding Name}" 
-                                   FontSize="17" 
-                                   FontAttributes="Bold" 
-                                   TextColor="#1E1E2C" />
+                            <!-- ID та Назва товару -->
+                            <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="6">
+                                <Label Text="{Binding Id, StringFormat='[ID: {0}]'}" 
+                                       FontSize="15" 
+                                       FontAttributes="Bold" 
+                                       TextColor="#6B7280" />
+                                <Label Text="{Binding Name}" 
+                                       FontSize="17" 
+                                       FontAttributes="Bold" 
+                                       TextColor="#1E1E2C" />
+                            </HorizontalStackLayout>
 
-                            <Label Grid.Row="0" Grid.Column="1" 
-                                   Text="{Binding Price, StringFormat='{0:C}'}" 
-                                   FontSize="16" 
-                                   FontAttributes="Bold" 
-                                   TextColor="#2E7D32" />
-
-                            <Label Grid.Row="1" Grid.Column="0" 
-                                   Text="{Binding Description}" 
-                                   FontSize="13" 
-                                   TextColor="#757575" 
-                                   Margin="0,4,0,0" />
-
-                            <Border Grid.Row="1" Grid.Column="1" 
-                                    BackgroundColor="#F0F4C3" 
+                            <!-- Кількість -->
+                            <Border Grid.Row="0" Grid.Column="1" 
+                                    BackgroundColor="#E8F5E9" 
                                     StrokeShape="RoundRectangle 6" 
-                                    Padding="8,2" 
-                                    Margin="0,4,0,0">
+                                    Padding="8,2">
                                 <Label Text="{Binding Quantity, StringFormat='К-сть: {0}'}" 
                                        FontSize="12" 
-                                       TextColor="#33691E" 
+                                       TextColor="#2E7D32" 
                                        FontAttributes="Bold" />
                             </Border>
+
+                            <!-- Тип операції -->
+                            <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="6" Margin="0,8,0,0">
+                                <Label Text="Тип операції:" FontSize="13" TextColor="#757575" />
+                                <Label Text="{Binding OperationType}" 
+                                       FontSize="13" 
+                                       TextColor="#1565C0" 
+                                       FontAttributes="Bold" />
+                            </HorizontalStackLayout>
                         </Grid>
                     </Border>
                 </DataTemplate>
