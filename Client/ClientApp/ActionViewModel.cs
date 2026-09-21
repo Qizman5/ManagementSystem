@@ -22,11 +22,11 @@ namespace ClientApp.ViewModels
         {
             if (ProductId <= 0)
             {
-                Message = "Введіть коректний ID товару!";
+                Message = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ID пїЅпїЅпїЅпїЅпїЅпїЅ!";
                 return;
             }
 
-            Message = $"Операція для товару #{ProductId} успішно створена!";
+            Message = $"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ #{ProductId} пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!";
             await Task.Delay(1500);
             await Shell.Current.GoToAsync("//ItemsPage");
         }
