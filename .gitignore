@@ -1,7 +1,16 @@
-﻿bin/
-obj/
-*.user
-Client/ClientApp/Platforms/Android/
-Server/ServerApp/appsettings.json
+﻿# Додаємо базові правила .gitignore для розробки .NET та середовища
+# .NET Build папки та кеші
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+.fake/
 
-.fake
+# Конфігурація та файли, специфічні для користувачаappsettings.json
+appsettings.*.json
+*.user
+*.suo
+
+# Файли, специфічні для ОС
+Thumbs.db
+.DS_Store
