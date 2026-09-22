@@ -190,12 +190,18 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 12. Маршрутизація (за замовчуванням відкривається сторінка Реєстрації)
+// 12. Перенаправлення з /api на /Admin/Index (усуває 404 помилку)
+app.MapGet("/api", context => {
+    context.Response.Redirect("/Admin/Index");
+    return Task.CompletedTask;
+});
+
+// 13. Маршрутизація контролерів (за замовчуванням /Admin/Index)
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Register}/{id?}");
+    pattern: "{controller=Admin}/{action=Index}/{id?}");
 
 app.MapControllers();
 
-// 13. Запуск
+// 14. Запуск додатка (Завжди в самому кінці)
 app.Run();

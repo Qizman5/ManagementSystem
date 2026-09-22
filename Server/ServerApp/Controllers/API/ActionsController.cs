@@ -19,6 +19,14 @@ namespace ServerApp.Controllers.Api
             _context = context;
         }
 
+        // GET: api/actions
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserAction>>> GetActions()
+        {
+            // Використовуємо стандартний асинхронний запит без навігаційних властивостей, якщо вони не визначені в моделі UserAction
+            return await _context.UserActions.ToListAsync();
+        }
+
         // POST: api/actions
         [HttpPost]
         public async Task<IActionResult> CreateAction([FromBody] UserAction actionModel)
@@ -28,7 +36,6 @@ namespace ServerApp.Controllers.Api
                 return BadRequest(ModelState);
             }
 
-            // 1. Перевірка коректності переданих параметрів
             if (actionModel.ItemId <= 0)
             {
                 return BadRequest(new { message = "ID товару має бути додатним числом більше 0." });
@@ -39,14 +46,12 @@ namespace ServerApp.Controllers.Api
                 return BadRequest(new { message = "Кількість товару повинна бути більше 0." });
             }
 
-            // 2. Перевірка наявності товару в базі даних
             var item = await _context.Items.FindAsync(actionModel.ItemId);
             if (item == null)
             {
                 return NotFound(new { message = $"Товар з ID {actionModel.ItemId} не знайдено." });
             }
 
-            // 3. Обробка типу операції
             var actionType = actionModel.ActionType?.Trim().ToLower();
 
             if (actionType == "outcome" || actionType == "списання" || actionType == "shipment")
@@ -74,15 +79,11 @@ namespace ServerApp.Controllers.Api
                 return BadRequest(new { message = "Некоректний тип операції. Допустимі значення: 'Income' або 'Outcome'." });
             }
 
-            // 4. Заповнення метаданих і додавання в DB Context
             actionModel.ActionDate = DateTime.UtcNow;
             
             _context.UserActions.Add(actionModel);
-
-            // 5. Збереження змін в MySQL
             await _context.SaveChangesAsync();
 
-            // 6. Повернення успішної відповіді 201 Created без прив'язки до GET-методу
             return StatusCode(201, new
             {
                 message = "Операцію успішно виконано.",

@@ -9,71 +9,85 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Видалити товар - Warehouse System</title>
+    <title>Видалення товару - AdminConsole</title>
+    <!-- Bootstrap 5 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
     <style>
-        body {
-            background: #0f172a;
-            color: #f8fafc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: #151c2c;
+            --border-color: rgba(255, 255, 255, 0.08);
         }
-        .glass-card {
-            background: #1e293b;
-            border: 1px solid rgba(239, 68, 68, 0.2);
+
+        body {
+            background-color: var(--bg-dark);
+            color: #f1f5f9;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(239, 68, 68, 0.25);
             border-radius: 16px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 460px;
         }
+
         .info-box {
-            background-color: #0f172a;
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
         }
     </style>
 </head>
-<body>
+<body class="d-flex align-items-center justify-content-center py-5">
+    <div class="container" style="max-width: 500px;">
+        <div class="stat-card p-4 p-md-5 text-center">
+            
+            <!-- Іконка попередження -->
+            <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-inline-flex align-items-center justify-content-center p-3 fs-1 mb-3" style="width: 70px; height: 70px;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
 
-<div class="container p-3">
-    <div class="glass-card mx-auto p-4 p-sm-5 text-center">
-        <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-inline-flex p-3 mb-3">
-            <i class="bi bi-exclamation-triangle-fill fs-1"></i>
+            <h3 class="fw-bold text-white mb-2">Підтвердження видалення</h3>
+            <p class="text-muted small mb-4">Ця дія є незворотною. Ви впевнені, що бажаєте остаточно видалити цей товар із системи?</p>
+
+            <!-- Блок інформації про товар -->
+            <div class="info-box p-3 text-start mb-4">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">ID товару:</span>
+                    <span class="fw-semibold text-white-50">#@Model.Id</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Назва:</span>
+                    <span class="fw-bold text-white">@Model.Name</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Залишок:</span>
+                    <span class="fw-semibold text-info">@Model.Quantity шт.</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted small">Кінцева ціна:</span>
+                    <span class="text-success fw-bold">@Model.FinalPrice.ToString("N2") ₴</span>
+                </div>
+            </div>
+
+            <!-- Форма видалення -->
+            <form asp-controller="Admin" asp-action="Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                
+                <div class="d-flex gap-2">
+                    <a href="/Admin/Index" class="btn btn-outline-secondary w-50 fw-semibold rounded-3 py-2">Скасувати</a>
+                    <button type="submit" class="btn btn-danger w-50 fw-bold rounded-3 py-2 shadow-sm">
+                        <i class="bi bi-trash me-1"></i> Видалити
+                    </button>
+                </div>
+            </form>
+
         </div>
-        <h3 class="fw-bold text-white mb-2">Видалити товар?</h3>
-        <p class="text-muted small mb-4">Ця дія є незворотною. Товар буде повністю вилучено з бази даних.</p>
-
-        <div class="info-box p-3 text-start mb-4">
-            <div class="d-flex justify-content-between mb-2">
-                <span class="text-muted small">Назва:</span>
-                <span class="fw-bold text-white">@Model.Name</span>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-                <span class="text-muted small">Залишок:</span>
-                <span class="fw-semibold text-info">@Model.Quantity шт.</span>
-            </div>
-            <div class="d-flex justify-content-between">
-                <span class="text-muted small">Кінцева ціна:</span>
-                <span class="fw-bold text-success">@Model.FinalPrice.ToString("N2") ₴</span>
-            </div>
-        </div>
-
-        <form asp-action="Delete" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" asp-for="Id" />
-            <div class="d-flex gap-2">
-                <a href="/Items" class="btn btn-outline-secondary w-50 fw-semibold rounded-3 py-2">Скасувати</a>
-                <button type="submit" class="btn btn-danger w-50 fw-bold rounded-3 py-2 shadow-sm">
-                    <i class="bi bi-trash me-1"></i> Видалити
-                </button>
-            </div>
-        </form>
     </div>
-</div>
-
 </body>
 </html>

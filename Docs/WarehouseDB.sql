@@ -1,3 +1,4 @@
+-- Створення бази даних, якщо вона ще не існує
 CREATE DATABASE IF NOT EXISTS WarehouseDB;
 USE WarehouseDB;
 
@@ -82,9 +83,3 @@ SELECT
 FROM Actions a
 JOIN Workers w ON a.WorkerID = w.ID
 JOIN Products p ON a.ProductID = p.ID;
-
--- Додавання індексів для оптимізації пошуку та зв'язків
-CREATE INDEX IX_Users_Email ON Users(Email);
-CREATE INDEX IX_Items_UserID ON Items(UserID);
-CREATE INDEX IX_Actions_UserId ON Actions(UserId);
-CREATE INDEX IX_Actions_ItemId ON Actions(ItemId);

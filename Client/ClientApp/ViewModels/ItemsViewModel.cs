@@ -15,6 +15,10 @@ namespace ClientApp.ViewModels
     {
         private readonly ApiService _apiService;
 
+        // Приватний кеш та прапорець ініціалізації для оптимізації UI
+        private List<Item> _cachedItems = new();
+        private bool _isInitialized = false;
+
         public static List<Item> FallbackItems { get; } = new()
         {
             new Item { Id = 1, Name = "Палета дерев'яна", Quantity = 50, OperationType = "Прихід (Прибуття)" },
@@ -27,6 +31,9 @@ namespace ClientApp.ViewModels
 
         [ObservableProperty]
         private bool _isBusy;
+
+        [ObservableProperty]
+        private bool _isRefreshing;
 
         [ObservableProperty]
         private string _errorMessage = string.Empty;
@@ -54,14 +61,23 @@ namespace ClientApp.ViewModels
             }
         }
 
+        // Оптимізований метод завантаження товарів із підтримкою кешу та параметра примусового оновлення
         [RelayCommand]
-        public async Task LoadItemsAsync()
+        public async Task LoadItemsAsync(bool forceRefresh = false)
         {
+            // Якщо дані вже завантажені і не вимагається примусове оновлення — беремо з кешу
+            if (_isInitialized && !forceRefresh && _cachedItems.Count > 0)
+            {
+                UpdateItemsCollection(_cachedItems);
+                return;
+            }
+
             if (IsBusy) return;
 
             try
             {
                 IsBusy = true;
+                IsRefreshing = true;
                 ErrorMessage = string.Empty;
 
                 List<ItemDto>? result = null;
@@ -77,13 +93,13 @@ namespace ClientApp.ViewModels
 
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    Items.Clear();
+                    var newList = new List<Item>();
 
                     if (result != null && result.Count > 0)
                     {
                         foreach (var dto in result)
                         {
-                            Items.Add(new Item
+                            newList.Add(new Item
                             {
                                 Id = dto.Id,
                                 Name = dto.Name,
@@ -94,12 +110,17 @@ namespace ClientApp.ViewModels
                     }
                     else
                     {
-                        // Якщо сервер не дав даних, тихо підставляємо локальні без DisplayAlert
+                        // Якщо сервер не дав даних, підставляємо локальні резервні дані
                         foreach (var item in FallbackItems)
                         {
-                            Items.Add(item);
+                            newList.Add(item);
                         }
                     }
+
+                    // Зберігаємо в кеш та оновлюємо колекцію екрана
+                    _cachedItems = newList;
+                    _isInitialized = true;
+                    UpdateItemsCollection(_cachedItems);
                 });
             }
             catch (Exception ex)
@@ -109,6 +130,16 @@ namespace ClientApp.ViewModels
             finally
             {
                 IsBusy = false;
+                IsRefreshing = false;
+            }
+        }
+
+        private void UpdateItemsCollection(List<Item> sourceList)
+        {
+            Items.Clear();
+            foreach (var item in sourceList)
+            {
+                Items.Add(item);
             }
         }
     }
