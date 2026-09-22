@@ -5,59 +5,57 @@
              Title="Створення операції"
              BackgroundColor="#F4F5F9">
 
-    <ScrollView VerticalOptions="Center">
-        <VerticalStackLayout Padding="25" Spacing="18" MaximumWidthRequest="500" HorizontalOptions="Center">
-            
-            <Label Text="Нова складська операція" 
-                   FontSize="24" 
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16">
+
+            <Label Text="Створення складської операції" 
+                   FontSize="20" 
                    FontAttributes="Bold" 
-                   TextColor="#1E1E2C" />
-
-            <!-- Вибір типу операції -->
-            <VerticalStackLayout Spacing="6">
-                <Label Text="Тип операції:" TextColor="#555" FontAttributes="Bold" FontSize="13" />
-                <Border Stroke="#E0E0E0" StrokeThickness="1" StrokeShape="RoundRectangle 10" BackgroundColor="White" Padding="10,0">
-                    <Picker Title="Оберіть тип операції" TextColor="#1E1E2C">
-                        <Picker.ItemsSource>
-                            <x:Array Type="{x:Type x:String}">
-                                <x:String>Прихід на склад</x:String>
-                                <x:String>Списання / Відвантаження</x:String>
-                                <x:String>Переміщення</x:String>
-                            </x:Array>
-                        </Picker.ItemsSource>
-                    </Picker>
-                </Border>
-            </VerticalStackLayout>
-
-            <!-- Поле ID Товару з захистом від від'ємних значень -->
-            <VerticalStackLayout Spacing="6">
-                <Label Text="ID Товару:" TextColor="#555" FontAttributes="Bold" FontSize="13" />
-                <Border Stroke="#E0E0E0" StrokeThickness="1" StrokeShape="RoundRectangle 10" BackgroundColor="White" Padding="12,2">
-                    <Entry Text="{Binding ProductId, Mode=TwoWay, UpdateSourceEventName=TextChanged}" 
-                           Placeholder="Введіть додатний ID" 
-                           Keyboard="Numeric" 
-                           TextChanged="OnNumericEntryTextChanged"
-                           TextColor="#1E1E2C" />
-                </Border>
-            </VerticalStackLayout>
-
-            <!-- Повідомлення стану -->
-            <Label Text="{Binding Message}" 
-                   TextColor="#E53935" 
-                   FontAttributes="Bold" 
+                   TextColor="#1E1E2C" 
                    HorizontalOptions="Center" />
 
-            <!-- Кнопка Зберегти -->
+            <!-- Тип операції -->
+            <Label Text="Тип операції:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
+            <Picker x:Name="OperationTypePicker" 
+                    Title="Оберіть тип операції"
+                    BackgroundColor="White">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Прихід (Прибуття)</x:String>
+                        <x:String>Витрата (Відвантаження)</x:String>
+                        <x:String>Переміщення</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
+            <!-- Назва товару -->
+            <Label Text="Назва товару:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
+            <Entry x:Name="ItemNameEntry" 
+                   Placeholder="Введіть назву товару" 
+                   BackgroundColor="White" />
+
+            <!-- Кількість -->
+            <Label Text="Кількість:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
+            <Entry x:Name="QuantityEntry" 
+                   Placeholder="Введіть кількість" 
+                   Keyboard="Numeric" 
+                   BackgroundColor="White" />
+
+            <!-- Примітка -->
+            <Label Text="Примітка:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
+            <Entry x:Name="NoteEntry" 
+                   Placeholder="Додайте примітку (необов'язково)" 
+                   BackgroundColor="White" />
+
+            <!-- Кнопка збереження -->
             <Button Text="Зберегти операцію" 
-                    Command="{Binding CreateActionCommand}"
-                    Clicked="OnSaveOperationClicked"
-                    BackgroundColor="#512BD4" 
+                    Clicked="OnSaveOperationClicked" 
+                    BackgroundColor="#2E7D32" 
                     TextColor="White" 
-                    FontAttributes="Bold"
-                    FontSize="16"
-                    CornerRadius="12"
-                    HeightRequest="52"
-                    Margin="0,10,0,0" />
+                    FontAttributes="Bold" 
+                    CornerRadius="10" 
+                    HeightRequest="50" 
+                    Margin="0,20,0,0" />
 
         </VerticalStackLayout>
     </ScrollView>

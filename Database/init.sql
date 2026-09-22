@@ -61,3 +61,53 @@ INSERT INTO Orders (WorkerID, ProductID, OrderDate, Status) VALUES
 
 -- 6. Перевірка результату в базі даних
 SELECT ID, Name, Username, FullName, Email, Role, PasswordHash FROM Workers;
+
+INSERT INTO Workers (Name, Username, FullName, Email, PasswordHash, Role) 
+VALUES ('admin', 'admin', 'System Admin', 'arotar2005@gmail.com', 'Admin123!', 'Admin');
+
+ALTER TABLE Actions ADD COLUMN ActionDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+USE WarehouseMS;
+
+
+CREATE TABLE Actions (
+    ID INT AUTO_INCREMENT PRIMARY KEY,
+    UserID INT NOT NULL,
+    ItemID INT NOT NULL,
+    ActionType VARCHAR(50) NOT NULL,
+    Quantity INT NOT NULL DEFAULT 1,
+    Note VARCHAR(255) NULL,
+    ActionDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Actions_Users FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE,
+    CONSTRAINT FK_Actions_Items FOREIGN KEY (ItemID) REFERENCES Items(ID) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3. Додаємо тестовий запис для перевірки
+INSERT INTO Actions (UserID, ItemID, ActionType, Quantity, Note) 
+VALUES (1, 1, 'Income', 10, 'Початковий залишок');
+
+-- 1. Тимчасово вимикаємо безпечний режим оновлення
+SET SQL_SAFE_UPDATES = 0;
+
+-- 2. Встановлюємо точне значення пароля для користувача admin
+UPDATE users 
+SET PasswordHash = 'Admin123!' 
+WHERE Username = 'admin' OR Id = 3;
+
+-- 3. Умикаємо режим назад
+SET SQL_SAFE_UPDATES = 1;
+
+-- 4. Перевіряємо, що збереглося в базі
+SELECT Id, Username, Email, PasswordHash FROM users WHERE Id = 3;
+
+SET SQL_SAFE_UPDATES = 0;
+
+UPDATE users 
+SET PasswordHash = 'Admin123!' 
+WHERE Username = 'admin';
+
+SET SQL_SAFE_UPDATES = 1;
+
+SELECT * FROM Workers;
+SELECT * FROM Products;
+SELECT * FROM Actions;
+

@@ -11,37 +11,20 @@ namespace ClientApp.ViewModels
     {
         private readonly ApiService _apiService;
 
-        private string _username = string.Empty;
+        // Встановлюємо email за замовчуванням
+        private string _username = "arotar2005@gmail.com";
         public string Username
         {
             get => _username;
-            set
-            {
-                _username = value;
-                OnPropertyChanged();
-            }
+            set => SetProperty(ref _username, value);
         }
 
-        private string _password = string.Empty;
+        // Встановлюємо пароль за замовчуванням
+        private string _password = "9wYrTyWftWLMf9";
         public string Password
         {
             get => _password;
-            set
-            {
-                _password = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private bool _isBusy;
-        public bool IsBusy
-        {
-            get => _isBusy;
-            set
-            {
-                _isBusy = value;
-                OnPropertyChanged();
-            }
+            set => SetProperty(ref _password, value);
         }
 
         public ICommand LoginCommand { get; }
@@ -69,15 +52,12 @@ namespace ClientApp.ViewModels
             {
                 IsBusy = true;
 
-                // 1. Запит до API (POST /api/auth/login)
-                string? token = await _apiService.LoginAsync(cleanUsername, cleanPassword);
+                // 1. Запит до API
+                bool isSuccess = await _apiService.LoginAsync(cleanUsername, cleanPassword);
 
-                if (!string.IsNullOrEmpty(token))
+                if (isSuccess)
                 {
-                    // 2. Збереження JWT-токена у Preferences
-                    Preferences.Set("jwt_token", token);
-
-                    // 3. Успішний перехід до сторінки товарів
+                    // 2. Успішний перехід до сторінки товарів
                     await Shell.Current.GoToAsync("//ItemsPage");
                 }
                 else

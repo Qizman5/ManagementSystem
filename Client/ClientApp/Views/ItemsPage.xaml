@@ -6,86 +6,78 @@
              Title="Список товарів"
              BackgroundColor="#F4F5F9">
 
-    <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="15">
-        
-        <!-- Кнопка Оновити -->
-        <Button Grid.Row="0" 
-                Text="↻  Оновити список" 
+    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="16" RowSpacing="12">
+
+        <!-- Заголовок -->
+        <Label Grid.Row="0" 
+               Text="Список товарів" 
+               FontSize="22" 
+               FontAttributes="Bold" 
+               TextColor="#1E1E2C" />
+
+        <!-- Кнопка Оновити список зверху -->
+        <Button Grid.Row="1" 
+                Text="🔄 Оновити список" 
                 Command="{Binding LoadItemsCommand}" 
-                BackgroundColor="#E8EAF6"
-                TextColor="#3F51B5"
-                FontAttributes="Bold"
-                FontSize="15"
-                CornerRadius="10"
-                HeightRequest="44" />
+                BackgroundColor="#E8EAF6" 
+                TextColor="#3F51B5" 
+                FontAttributes="Bold" 
+                CornerRadius="8" 
+                HeightRequest="40" />
 
-        <!-- Список товарів та складських операцій -->
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Items}">
-            <CollectionView.EmptyView>
-                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
-                    <Label Text="📦" FontSize="48" HorizontalOptions="Center" />
-                    <Label Text="Товари відсутні або завантажуються..." TextColor="#757575" FontSize="16" HorizontalOptions="Center" />
-                </VerticalStackLayout>
-            </CollectionView.EmptyView>
+        <!-- Список товарів (Займає весь вільний простір) -->
+        <RefreshView Grid.Row="2" 
+                     IsRefreshing="{Binding IsBusy}" 
+                     Command="{Binding LoadItemsCommand}">
             
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:Item">
-                    <Border Margin="0,6" 
-                            Padding="16" 
-                            StrokeShape="RoundRectangle 14" 
-                            StrokeThickness="0" 
-                            BackgroundColor="White">
-                        <Border.Shadow>
-                            <Shadow Brush="#10000000" Offset="0,4" Radius="8" />
-                        </Border.Shadow>
-                        
-                        <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
-                            <!-- ID та Назва товару -->
-                            <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="6">
-                                <Label Text="{Binding Id, StringFormat='[ID: {0}]'}" 
-                                       FontSize="15" 
+            <CollectionView ItemsSource="{Binding Items}" 
+                            EmptyView="Товари відсутні або завантажуються...">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Item">
+                        <Frame Margin="0,4" 
+                               Padding="14" 
+                               BackgroundColor="White" 
+                               CornerRadius="10" 
+                               HasShadow="False" 
+                               BorderColor="#E0E0E0">
+                            <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto" RowSpacing="4">
+                                <Label Grid.Row="0" Grid.Column="0" 
+                                       Text="{Binding Name, StringFormat='[ID: {0}] {1}'}" 
                                        FontAttributes="Bold" 
-                                       TextColor="#6B7280" />
-                                <Label Text="{Binding Name}" 
-                                       FontSize="17" 
-                                       FontAttributes="Bold" 
-                                       TextColor="#1E1E2C" />
-                            </HorizontalStackLayout>
+                                       TextColor="#212121" 
+                                       FontSize="14" />
+                                
+                                <Frame Grid.Row="0" Grid.Column="1" 
+                                       BackgroundColor="#E8F5E9" 
+                                       CornerRadius="6" 
+                                       Padding="6,2" 
+                                       HasShadow="False">
+                                    <Label Text="{Binding Quantity, StringFormat='К-сть: {0}'}" 
+                                           TextColor="#2E7D32" 
+                                           FontSize="11" 
+                                           FontAttributes="Bold" />
+                                </Frame>
 
-                            <!-- Кількість -->
-                            <Border Grid.Row="0" Grid.Column="1" 
-                                    BackgroundColor="#E8F5E9" 
-                                    StrokeShape="RoundRectangle 6" 
-                                    Padding="8,2">
-                                <Label Text="{Binding Quantity, StringFormat='К-сть: {0}'}" 
-                                       FontSize="12" 
-                                       TextColor="#2E7D32" 
-                                       FontAttributes="Bold" />
-                            </Border>
-
-                            <!-- Тип операції -->
-                            <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="6" Margin="0,8,0,0">
-                                <Label Text="Тип операції:" FontSize="13" TextColor="#757575" />
-                                <Label Text="{Binding OperationType}" 
-                                       FontSize="13" 
+                                <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                                       Text="Тип операції: Прихід (Прибуття)" 
                                        TextColor="#1565C0" 
-                                       FontAttributes="Bold" />
-                            </HorizontalStackLayout>
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                                       FontSize="12" />
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
 
-        <!-- Кнопка Нова операція -->
-        <Button Grid.Row="2" 
-                Text="+  Створити нову операцію" 
-                Clicked="OnCreateOperationClicked"
+        <!-- Кнопка створити операцію внизу -->
+        <Button Grid.Row="3" 
+                Text="+ Створити нову операцію" 
+                Clicked="OnCreateOperationClicked" 
                 BackgroundColor="#512BD4" 
                 TextColor="White" 
-                FontAttributes="Bold"
-                FontSize="16"
-                CornerRadius="12"
-                HeightRequest="52" />
+                FontAttributes="Bold" 
+                CornerRadius="10" 
+                HeightRequest="50" />
+
     </Grid>
 </ContentPage>

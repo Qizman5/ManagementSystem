@@ -4,8 +4,10 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ClientApp.Models;
 using ClientApp.Services;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 
 namespace ClientApp.ViewModels
 {
@@ -13,15 +15,15 @@ namespace ClientApp.ViewModels
     {
         private readonly ApiService _apiService;
 
-        public static List<ItemDto> SharedItems { get; } = new()
+        public static List<Item> FallbackItems { get; } = new()
         {
-            new ItemDto { Id = 1, Name = "Палета дерев'яна", Quantity = 50 },
-            new ItemDto { Id = 2, Name = "Коробка картонна (L)", Quantity = 120 },
-            new ItemDto { Id = 3, Name = "Стретч-плівка 20мкм", Quantity = 15 }
+            new Item { Id = 1, Name = "Палета дерев'яна", Quantity = 50, OperationType = "Прихід (Прибуття)" },
+            new Item { Id = 2, Name = "Коробка картонна (L)", Quantity = 120, OperationType = "Витрата (Відвантаження)" },
+            new Item { Id = 3, Name = "Стретч-плівка 20мкм", Quantity = 15, OperationType = "Переміщення" }
         };
 
         [ObservableProperty]
-        private ObservableCollection<ItemDto> _items = new();
+        private ObservableCollection<Item> _items = new();
 
         [ObservableProperty]
         private bool _isBusy;
@@ -35,6 +37,23 @@ namespace ClientApp.ViewModels
             _ = LoadItemsAsync();
         }
 
+        // Перехід на сторінку створення операції
+        [RelayCommand]
+        private async Task GoToCreateOperationAsync()
+        {
+            try
+            {
+                if (Shell.Current != null)
+                {
+                    await Shell.Current.GoToAsync("//CreateOperationPage");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Navigation Error]: {ex.Message}");
+            }
+        }
+
         [RelayCommand]
         public async Task LoadItemsAsync()
         {
@@ -45,44 +64,52 @@ namespace ClientApp.ViewModels
                 IsBusy = true;
                 ErrorMessage = string.Empty;
 
-                var result = await _apiService.GetItemsAsync();
+                List<ItemDto>? result = null;
 
-                if (result != null && result.Count > 0)
+                try
                 {
-                    MainThread.BeginInvokeOnMainThread(() =>
+                    result = await _apiService.GetItemsAsync();
+                }
+                catch (Exception netEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Network Error]: {netEx.Message}");
+                }
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    Items.Clear();
+
+                    if (result != null && result.Count > 0)
                     {
-                        Items.Clear();
-                        foreach (var item in result)
+                        foreach (var dto in result)
+                        {
+                            Items.Add(new Item
+                            {
+                                Id = dto.Id,
+                                Name = dto.Name,
+                                Quantity = dto.Quantity,
+                                OperationType = "Прихід (Прибуття)"
+                            });
+                        }
+                    }
+                    else
+                    {
+                        // Якщо сервер не дав даних, тихо підставляємо локальні без DisplayAlert
+                        foreach (var item in FallbackItems)
                         {
                             Items.Add(item);
                         }
-                    });
-                    return;
-                }
-
-                LoadFallbackItems();
+                    }
+                });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ItemsViewModel Error]: {ex.Message}");
-                LoadFallbackItems();
+                System.Diagnostics.Debug.WriteLine($"[ItemsViewModel Fatal Error]: {ex.Message}");
             }
             finally
             {
                 IsBusy = false;
             }
-        }
-
-        private void LoadFallbackItems()
-        {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                Items.Clear();
-                foreach (var item in SharedItems)
-                {
-                    Items.Add(item);
-                }
-            });
         }
     }
 }

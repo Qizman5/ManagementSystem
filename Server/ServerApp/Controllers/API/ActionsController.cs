@@ -9,7 +9,7 @@ namespace ServerApp.Controllers.Api
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    [EnableRateLimiting("StrictPolicy")] // Підключаємо захист Rate Limiter
+    [EnableRateLimiting("StrictPolicy")]
     public class ActionsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -28,7 +28,7 @@ namespace ServerApp.Controllers.Api
                 return BadRequest(ModelState);
             }
 
-            // 1. Перевірка на від'ємне значення або нуль для ID товару та кількості
+            // 1. Перевірка коректності переданих параметрів
             if (actionModel.ItemId <= 0)
             {
                 return BadRequest(new { message = "ID товару має бути додатним числом більше 0." });
@@ -39,16 +39,16 @@ namespace ServerApp.Controllers.Api
                 return BadRequest(new { message = "Кількість товару повинна бути більше 0." });
             }
 
-            // 2. Пошук товару в базі даних
+            // 2. Перевірка наявності товару в базі даних
             var item = await _context.Items.FindAsync(actionModel.ItemId);
             if (item == null)
             {
                 return NotFound(new { message = $"Товар з ID {actionModel.ItemId} не знайдено." });
             }
 
+            // 3. Обробка типу операції
             var actionType = actionModel.ActionType?.Trim().ToLower();
 
-            // 3. Обробка списання / відвантаження
             if (actionType == "outcome" || actionType == "списання" || actionType == "shipment")
             {
                 if (item.Quantity < actionModel.Quantity)
@@ -64,7 +64,6 @@ namespace ServerApp.Controllers.Api
                 item.Quantity -= actionModel.Quantity;
                 actionModel.ActionType = "Outcome";
             }
-            // 4. Обробка приходу
             else if (actionType == "income" || actionType == "прихід" || actionType == "receipt")
             {
                 item.Quantity += actionModel.Quantity;
@@ -75,13 +74,16 @@ namespace ServerApp.Controllers.Api
                 return BadRequest(new { message = "Некоректний тип операції. Допустимі значення: 'Income' або 'Outcome'." });
             }
 
-            // 5. Фіксація дати та збереження у БД
+            // 4. Заповнення метаданих і додавання в DB Context
             actionModel.ActionDate = DateTime.UtcNow;
-
+            
             _context.UserActions.Add(actionModel);
+
+            // 5. Збереження змін в MySQL
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(CreateAction), new { id = actionModel.Id }, new
+            // 6. Повернення успішної відповіді 201 Created без прив'язки до GET-методу
+            return StatusCode(201, new
             {
                 message = "Операцію успішно виконано.",
                 actionId = actionModel.Id,

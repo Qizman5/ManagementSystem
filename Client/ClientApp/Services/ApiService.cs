@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
 
 namespace ClientApp.Services
@@ -12,9 +13,10 @@ namespace ClientApp.Services
     {
         private readonly HttpClient _httpClient;
 
-        // http://10.0.2.2:5024/ - для Android Emulator
-        // http://localhost:5024/ - для Windows / iOS Simulator
-        private const string BaseUrl = "http://10.0.2.2:5024/"; 
+        // Автоматично вибирає 10.0.2.2 для Android-емулятора та localhost для Windows/iOS
+        public static string BaseUrl = DeviceInfo.Platform == DevicePlatform.Android
+            ? "http://10.0.2.2:5024/"
+            : "http://localhost:5024/";
 
         public ApiService()
         {
@@ -58,6 +60,7 @@ namespace ClientApp.Services
                     if (result != null && !string.IsNullOrEmpty(result.Token))
                     {
                         await SecureStorage.Default.SetAsync("jwt_token", result.Token);
+                        Preferences.Set("jwt_token", result.Token);
                         return true;
                     }
                 }
@@ -116,8 +119,11 @@ namespace ClientApp.Services
         }
     }
 
+    // --- DTO Моделі ---
+
     public class LoginResponseDto
     {
+        public string Message { get; set; } = string.Empty;
         public string Token { get; set; } = string.Empty;
     }
 
@@ -131,8 +137,10 @@ namespace ClientApp.Services
 
     public class UserActionDto
     {
+        public int UserId { get; set; } = 3; // ID користувача (3 для admin)
         public int ItemId { get; set; }
-        public string ActionType { get; set; } = string.Empty;
+        public string ActionType { get; set; } = "Income"; // "Income" або "Outcome"
         public int Quantity { get; set; }
+        public string Note { get; set; } = string.Empty;
     }
 }

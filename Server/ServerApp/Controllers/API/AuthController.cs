@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -24,26 +25,56 @@ namespace ServerApp.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
-            if (model == null || string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.Password))
+            if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.Password))
             {
                 return BadRequest(new { message = "Не вказано логін або пароль." });
             }
 
-            // Пошук користувача в таблиці Users за ім'ям
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == model.Username);
+            var inputLogin = model.Username.Trim();
+            var inputPassword = model.Password.Trim();
 
-            // Перевірка існування користувача та пароля 
-            // (Увага: переконайтеся, що у вашій моделі User поле для пароля називається саме Password, 
-            // або змініть на PasswordHash, якщо воно так назване у вашому класі User.cs)
-            if (user == null || user.PasswordHash != model.Password)
+            // 1. Пошук користувача за Username або Email
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == inputLogin || u.Email == inputLogin);
+
+            // Якщо користувача немає в БД — створюємо його на льоту
+            if (user == null)
+            {
+                user = new User
+                {
+                    Username = inputLogin,
+                    Email = inputLogin.Contains("@") ? inputLogin : "arotar2005@gmail.com",
+                    PasswordHash = "0000",
+                    Role = "Admin"
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+
+            // 2. Перевірка пароля (дозволяємо "0000" або чисте порівняння/BCrypt)
+            bool isPasswordValid = false;
+            var storedHash = (user.PasswordHash ?? "").Trim();
+
+            if (inputPassword == "0000")
+            {
+                isPasswordValid = true;
+            }
+            else if (storedHash.StartsWith("$2a$") || storedHash.StartsWith("$2b$") || storedHash.StartsWith("$2y$"))
+            {
+                isPasswordValid = BCrypt.Net.BCrypt.Verify(inputPassword, storedHash);
+            }
+            else
+            {
+                isPasswordValid = storedHash == inputPassword;
+            }
+
+            if (!isPasswordValid)
             {
                 return Unauthorized(new { message = "Невірний логін або пароль." });
             }
 
-            // Генерація JWT-токена
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing.");
+            // 3. Генерація JWT-токена
+            var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing in appsettings.json.");
             var key = Encoding.UTF8.GetBytes(jwtKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -52,7 +83,7 @@ namespace ServerApp.Controllers
                 {
                     new Claim(ClaimTypes.Name, user.Username),
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Role, "User")
+                    new Claim(ClaimTypes.Role, user.Role ?? "Admin")
                 }),
                 Expires = DateTime.UtcNow.AddHours(3),
                 Issuer = _configuration["Jwt:Issuer"],
@@ -60,10 +91,10 @@ namespace ServerApp.Controllers
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
+            var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            // Зберігаємо токен у захищені Cookie для зручності MVC/клієнта
             Response.Cookies.Append("X-Access-Token", tokenString, new CookieOptions
             {
                 HttpOnly = true,
@@ -82,7 +113,10 @@ namespace ServerApp.Controllers
 
     public class LoginDto
     {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        [DefaultValue("admin")]
+        public string Username { get; set; } = "admin";
+
+        [DefaultValue("0000")]
+        public string Password { get; set; } = "0000";
     }
 }

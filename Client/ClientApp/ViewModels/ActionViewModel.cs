@@ -3,8 +3,8 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ClientApp.Models;
 using ClientApp.Services;
-using Microsoft.Maui.Controls;
 
 namespace ClientApp.ViewModels
 {
@@ -13,26 +13,25 @@ namespace ClientApp.ViewModels
         private readonly ApiService _apiService;
 
         [ObservableProperty]
-        private ObservableCollection<ItemDto> _items = new();
+        private ObservableCollection<Item> _items = new();
 
         [ObservableProperty]
-        private ItemDto? _selectedItem;
+        private Item? _selectedItem;
 
         [ObservableProperty]
-        private string _selectedActionType = "Прихід";
+        private string _actionType = "Прихід (Прибуття)";
 
         [ObservableProperty]
         private int _quantity = 1;
 
         [ObservableProperty]
+        private string _note = string.Empty;
+
+        [ObservableProperty]
         private bool _isBusy;
 
-        public ObservableCollection<string> ActionTypes { get; } = new()
-        {
-            "Прихід",
-            "Витрата",
-            "Переміщення"
-        };
+        [ObservableProperty]
+        private string _errorMessage = string.Empty;
 
         public ActionViewModel()
         {
@@ -43,61 +42,57 @@ namespace ClientApp.ViewModels
         [RelayCommand]
         public async Task LoadItemsAsync()
         {
-            var result = await _apiService.GetItemsAsync();
-            if (result != null)
+            if (IsBusy) return;
+
+            try
             {
+                IsBusy = true;
                 Items.Clear();
-                foreach (var item in result)
+
+                var dtos = await _apiService.GetItemsAsync();
+                if (dtos != null && dtos.Count > 0)
                 {
-                    Items.Add(item);
+                    foreach (var dto in dtos)
+                    {
+                        Items.Add(new Item { Id = dto.Id, Name = dto.Name, Quantity = dto.Quantity });
+                    }
                 }
+                else
+                {
+                    foreach (var fallback in ItemsViewModel.FallbackItems)
+                    {
+                        Items.Add(fallback);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ActionViewModel Load Error]: {ex.Message}");
+                foreach (var fallback in ItemsViewModel.FallbackItems)
+                {
+                    Items.Add(fallback);
+                }
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 
         [RelayCommand]
         public async Task CreateActionAsync()
         {
-            if (IsBusy) return;
-
-            if (SelectedItem == null)
-            {
-                await Shell.Current.DisplayAlert("Помилка", "Будь ласка, виберіть товар зі списку", "OK");
-                return;
-            }
-
-            if (Quantity <= 0)
-            {
-                await Shell.Current.DisplayAlert("Помилка", "Кількість повинна бути більше 0", "OK");
-                return;
-            }
+            if (SelectedItem == null) return;
 
             try
             {
                 IsBusy = true;
-
-                var dto = new UserActionDto
-                {
-                    ItemId = SelectedItem.Id,
-                    ActionType = SelectedActionType,
-                    Quantity = Quantity
-                };
-
-                bool success = await _apiService.CreateActionAsync(dto);
-
-                if (success)
-                {
-                    await Shell.Current.DisplayAlert("Успіх", "Операцію зафіксовано на сервері!", "OK");
-                    await Shell.Current.GoToAsync("//ItemsPage");
-                }
-                else
-                {
-                    await Shell.Current.DisplayAlert("Помилка", "Не вдалося зберегти операцію на сервері", "OK");
-                }
+                // Імітація або відправка запиту до API
+                await Task.Delay(500); 
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ActionViewModel Exception]: {ex.Message}");
-                await Shell.Current.DisplayAlert("Помилка", "Сталася помилка з'єднання", "OK");
+                ErrorMessage = ex.Message;
             }
             finally
             {

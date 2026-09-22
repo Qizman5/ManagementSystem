@@ -14,7 +14,7 @@ namespace ServerApp.Controllers
             ViewBag.ClientStatus = "Active";
             
             // Інформація про систему
-            ViewBag.Uptime = TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"d\'d \'h\'h \'m\'m\'");
+            ViewBag.Uptime = TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"d'd 'h'h 'm'm'");
             ViewBag.OsVersion = Environment.OSVersion.ToString();
             ViewBag.ProcessMemory = (Process.GetCurrentProcess().WorkingSet64 / (1024 * 1024)).ToString() + " MB";
 

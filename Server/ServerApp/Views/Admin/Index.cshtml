@@ -1,154 +1,233 @@
+@model IEnumerable<ServerApp.Models.Item>
 @{
-    ViewData["Title"] = "Дашборд Адміністратора";
+    ViewData["Title"] = "Дашборд та Управління Складом";
 }
 
-<!-- Заголовок адмінки -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1"><i class="bi bi-shield-lock text-primary me-2"></i>Панель Управління Проєктом</h2>
-        <p class="text-muted mb-0">Огляд стану систем ServerApp та ClientApp</p>
+<div class="container my-4">
+    <!-- 1. ЗАГОЛОВОК И ШАПКА -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-shield-lock text-primary me-2"></i>Панель Управління Проєктом</h2>
+            <p class="text-muted mb-0">Огляд стану систем та управління товарним запасом склада</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Admin/CreateProduct" class="btn btn-success fw-bold shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i> Додати товар
+            </a>
+            <button class="btn btn-outline-primary" onclick="location.reload();">
+                <i class="bi bi-arrow-clockwise me-1"></i> Оновити
+            </button>
+            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                <button type="submit" class="btn btn-outline-danger fw-bold">Вийти</button>
+            </form>
+        </div>
     </div>
-    <div class="d-flex gap-2">
-        <a asp-controller="Items" asp-action="Index" class="btn btn-outline-secondary">
-            <i class="bi bi-box-seam me-1"></i> До товарів
-        </a>
-        <button class="btn btn-purple" onclick="location.reload();">
-            <i class="bi bi-arrow-clockwise me-1"></i> Оновити
-        </button>
-    </div>
-</div>
 
-<!-- Метрики та Статуси Модулів -->
-<div class="row g-3 mb-4">
-    <!-- ServerApp Status -->
-    <div class="col-md-3">
-        <div class="card h-100 border-0 shadow-sm p-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary fs-3">
-                    <i class="bi bi-server"></i>
+    <!-- 2. МЕТРИКИ ТА СТАТУСИ МОДУЛІВ -->
+    <div class="row g-3 mb-4">
+        <!-- ServerApp Status -->
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary fs-3">
+                        <i class="bi bi-server"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small d-block">Модуль Server</span>
+                        <span class="fw-bold text-dark fs-5">ServerApp</span>
+                        <div class="mt-1">
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                                <i class="bi bi-circle-fill me-1 small"></i> @(ViewBag.ServerStatus ?? "Active")
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <span class="text-muted small d-block">Модуль Server</span>
-                    <span class="fw-bold text-dark fs-5">ServerApp</span>
-                    <div class="mt-1">
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
-                            <i class="bi bi-circle-fill me-1 small"></i> @ViewBag.ServerStatus
-                        </span>
+            </div>
+        </div>
+
+        <!-- ClientApp Status -->
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3 text-info fs-3">
+                        <i class="bi bi-laptop"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small d-block">Модуль Client</span>
+                        <span class="fw-bold text-dark fs-5">ClientApp</span>
+                        <div class="mt-1">
+                            <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill">
+                                <i class="bi bi-circle-fill me-1 small"></i> @(ViewBag.ClientStatus ?? "Online")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Використання пам'яті -->
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning fs-3">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small d-block">ОЗП Сервера</span>
+                        <span class="fw-bold text-dark fs-5">@(ViewBag.ProcessMemory ?? "245 MB")</span>
+                        <div class="text-muted small mt-1">ОС: @(ViewBag.OsVersion ?? "Windows / Linux")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Час роботи сервера -->
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success fs-3">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small d-block">Uptime Сервера</span>
+                        <span class="fw-bold text-dark fs-5">@(ViewBag.Uptime ?? "99.9%")</span>
+                        <div class="text-muted small mt-1">Стабільне з'єднання</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ClientApp Status -->
-    <div class="col-md-3">
-        <div class="card h-100 border-0 shadow-sm p-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-info bg-opacity-10 p-3 text-info fs-3">
-                    <i class="bi bi-laptop"></i>
+    <!-- 3. РОЗДІЛИ УПРАВЛІННЯ МОДУЛЯМИ -->
+    <div class="row g-4 mb-4">
+        <!-- Управління ServerApp -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-hdd-network me-2"></i>ServerApp (Бекенд та База)</h5>
+                    <span class="badge bg-light text-dark border">MySQL / EntityFramework</span>
                 </div>
-                <div>
-                    <span class="text-muted small d-block">Модуль Client</span>
-                    <span class="fw-bold text-dark fs-5">ClientApp</span>
-                    <div class="mt-1">
-                        <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill">
-                            <i class="bi bi-circle-fill me-1 small"></i> @ViewBag.ClientStatus
-                        </span>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Швидкий доступ до баз даних, користувачів та операцій складського обліку.</p>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary text-start d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-people me-2"></i> Користувачі та Ролі (Users)</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <a asp-controller="UserActions" asp-action="Index" class="btn btn-outline-primary text-start d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-journal-text me-2"></i> Логи Операцій (UserActions)</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управління ClientApp -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-info"><i class="bi bi-window-desktop me-2"></i>ClientApp (Клієнтський Додаток)</h5>
+                    <span class="badge bg-light text-dark border">Frontend / REST API</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Налаштування зв'язку та API ендпоінтів для клієнтських терміналів.</p>
+                    <div class="p-3 bg-light rounded-3 mb-3 border">
+                        <div class="d-flex justify-content-between text-muted small mb-1">
+                            <span>API Base URL:</span>
+                            <code class="text-primary">http://localhost:5024/api/</code>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>Формат даних:</span>
+                            <span class="fw-semibold">JSON (REST API)</span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/swagger" target="_blank" class="btn btn-outline-info flex-grow-1">
+                            <i class="bi bi-code-slash me-1"></i> Swagger API
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary flex-grow-1" onclick="alert('ClientApp з\'єднано успішно!')">
+                            <i class="bi bi-wifi me-1"></i> Тест Зв'язку
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Використання пам'яті -->
-    <div class="col-md-3">
-        <div class="card h-100 border-0 shadow-sm p-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning fs-3">
-                    <i class="bi bi-cpu"></i>
-                </div>
-                <div>
-                    <span class="text-muted small d-block">ОЗП Сервера</span>
-                    <span class="fw-bold text-dark fs-5">@ViewBag.ProcessMemory</span>
-                    <div class="text-muted small mt-1">ОС: @ViewBag.OsVersion</div>
-                </div>
-            </div>
+    <!-- 4. ТАБЛИЦЯ ТОВАРІВ (З можливостями редагування ціни та знижки) -->
+    <div class="card shadow border-0 rounded-3">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-boxes me-2"></i>Управління Товарами</h5>
+            <span class="badge bg-primary rounded-pill px-3">Всього товарів: @(Model?.Count() ?? 0)</span>
         </div>
-    </div>
-
-    <!-- Час роботи сервера -->
-    <div class="col-md-3">
-        <div class="card h-100 border-0 shadow-sm p-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success fs-3">
-                    <i class="bi bi-clock-history"></i>
-                </div>
-                <div>
-                    <span class="text-muted small d-block">Uptime Сервера</span>
-                    <span class="fw-bold text-dark fs-5">@ViewBag.Uptime</span>
-                    <div class="text-muted small mt-1">Стабільне з'єднання</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Розділи управління модулями -->
-<div class="row g-4 mb-4">
-    <!-- Управління ServerApp -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-hdd-network me-2"></i>ServerApp (Бекенд та База)</h5>
-                <span class="badge bg-light text-dark border">SQLite / EntityFramework</span>
-            </div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">Швидкий доступ до баз даних, користувачів та операцій складського обліку.</p>
-                <div class="d-grid gap-2">
-                    <a asp-controller="Items" asp-action="Index" class="btn btn-outline-primary text-start d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-boxes me-2"></i> Управління Товарами (Items)</span>
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
-                    <a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary text-start d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-people me-2"></i> Користувачі та Ролі (Users)</span>
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
-                    <a asp-controller="UserActions" asp-action="Index" class="btn btn-outline-primary text-start d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-journal-text me-2"></i> Логи Операцій (UserActions)</span>
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Управління ClientApp -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold mb-0 text-info"><i class="bi bi-window-desktop me-2"></i>ClientApp (Клієнтський Додаток)</h5>
-                <span class="badge bg-light text-dark border">Frontend / Desktop App</span>
-            </div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">Налаштування зв'язку та API ендпоінтів для клієнтських терміналів.</p>
-                <div class="p-3 bg-light rounded-3 mb-3 border">
-                    <div class="d-flex justify-content-between text-muted small mb-1">
-                        <span>API Base URL:</span>
-                        <code class="text-primary">http://localhost:5024/api/</code>
-                    </div>
-                    <div class="d-flex justify-content-between text-muted small">
-                        <span>Формат даних:</span>
-                        <span class="fw-semibold">JSON (REST API)</span>
-                    </div>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="/swagger" target="_blank" class="btn btn-outline-info flex-grow-1">
-                        <i class="bi bi-code-slash me-1"></i> Swagger API
-                    </a>
-                    <a href="#" class="btn btn-outline-secondary flex-grow-1" onclick="alert('ClientApp з\'єднано успішно!')">
-                        <i class="bi bi-wifi me-1"></i> Тест Зв'язку
-                    </a>
-                </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light border-bottom">
+                        <tr class="text-secondary text-uppercase small fw-bold">
+                            <th class="ps-4">ID</th>
+                            <th>Назва товару</th>
+                            <th>Кількість</th>
+                            <th>Базова ціна</th>
+                            <th>Знижка</th>
+                            <th>Кінцева ціна</th>
+                            <th class="text-end pe-4">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-bold text-muted">#@item.Id</td>
+                                    <td class="fw-bold text-dark">@item.Name</td>
+                                    <td>
+                                        <span class="badge bg-secondary rounded-pill px-3 py-2">@item.Quantity шт.</span>
+                                    </td>
+                                    <td class="text-muted">
+                                        @if (item.Discount > 0)
+                                        {
+                                            <span class="text-decoration-line-through">@item.Price.ToString("N2") ₴</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@item.Price.ToString("N2") ₴</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.Discount > 0)
+                                        {
+                                            <span class="badge bg-danger rounded-pill">-@item.Discount%</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">0%</span>
+                                        }
+                                    </td>
+                                    <td class="fw-bold text-success fs-6">
+                                        @item.FinalPrice.ToString("N2") ₴
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="/Admin/Edit/@item.Id" class="btn btn-sm btn-warning fw-semibold shadow-sm me-1">
+                                            ✏️ Редагувати
+                                        </a>
+                                        <a href="/Admin/Delete/@item.Id" class="btn btn-sm btn-outline-danger fw-semibold">
+                                            🗑️ Видалити
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">Товари відсутні в базі даних.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

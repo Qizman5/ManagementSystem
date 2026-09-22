@@ -19,6 +19,13 @@ namespace ServerApp.Models
                 .Property(i => i.Price)
                 .HasPrecision(18, 2);
 
+            // Налаштування зв'язку Foreign Key для UserAction
+            modelBuilder.Entity<UserAction>()
+                .HasOne(a => a.User)
+                .WithMany(u => u.Actions)
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Початкові дані (Seed Data)
             modelBuilder.Entity<Item>().HasData(
                 new Item { Id = 1, Name = "Laptop", Quantity = 10, Price = 999.99m },

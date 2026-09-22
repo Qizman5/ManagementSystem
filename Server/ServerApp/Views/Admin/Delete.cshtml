@@ -1,4 +1,4 @@
-﻿@model ServerApp.Models.Item
+@model ServerApp.Models.Item
 @{
     ViewData["Title"] = "Видалення товару";
     Layout = null;
@@ -45,7 +45,7 @@
             <i class="bi bi-exclamation-triangle-fill fs-1"></i>
         </div>
         <h3 class="fw-bold text-white mb-2">Видалити товар?</h3>
-        <p class="text-muted small mb-4">Ця дія є незворотною. Товар буде вилучено зі складу.</p>
+        <p class="text-muted small mb-4">Ця дія є незворотною. Товар буде повністю вилучено з бази даних.</p>
 
         <div class="info-box p-3 text-start mb-4">
             <div class="d-flex justify-content-between mb-2">
@@ -62,11 +62,11 @@
             </div>
         </div>
 
-        <form asp-controller="Items" asp-action="Delete" method="post">
+        <form asp-action="Delete" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />
             <div class="d-flex gap-2">
-                <a asp-action="Index" class="btn btn-outline-secondary w-50 fw-semibold rounded-3 py-2">Скасувати</a>
+                <a href="/Items" class="btn btn-outline-secondary w-50 fw-semibold rounded-3 py-2">Скасувати</a>
                 <button type="submit" class="btn btn-danger w-50 fw-bold rounded-3 py-2 shadow-sm">
                     <i class="bi bi-trash me-1"></i> Видалити
                 </button>

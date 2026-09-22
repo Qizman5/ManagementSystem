@@ -1,78 +1,134 @@
 using System;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Controls;
+using ClientApp.Services;
 using ClientApp.Models;
 
 namespace ClientApp.ViewModels
 {
-    public partial class CreateOperationViewModel : ObservableObject
+    public partial class CreateOperationViewModel : BaseViewModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly ApiService _apiService;
 
-        [ObservableProperty]
-        private bool _isBusy;
-
-        [ObservableProperty]
-        private string _errorMessage = string.Empty;
-
-        public CreateOperationViewModel(HttpClient httpClient)
+        private int _itemId;
+        public int ItemId
         {
-            _httpClient = httpClient;
+            get => _itemId;
+            set
+            {
+                if (SetProperty(ref _itemId, value))
+                {
+                    OnPropertyChanged(nameof(ProductId));
+                }
+            }
         }
 
-        [RelayCommand]
-        public async Task SaveOperationAsync()
+        // Псевдонім для ProductId
+        public int ProductId
+        {
+            get => ItemId;
+            set => ItemId = value;
+        }
+
+        private int _quantity = 1;
+        public int Quantity
+        {
+            get => _quantity;
+            set => SetProperty(ref _quantity, value);
+        }
+
+        private string _actionType = "Income";
+        public string ActionType
+        {
+            get => _actionType;
+            set => SetProperty(ref _actionType, value);
+        }
+
+        private string _note = string.Empty;
+        public string Note
+        {
+            get => _note;
+            set => SetProperty(ref _note, value);
+        }
+
+        private string _errorMessage = string.Empty;
+        public string ErrorMessage
+        {
+            get => _errorMessage;
+            set
+            {
+                if (SetProperty(ref _errorMessage, value))
+                {
+                    OnPropertyChanged(nameof(Message));
+                }
+            }
+        }
+
+        // Псевдонім для Message
+        public string Message
+        {
+            get => ErrorMessage;
+            set => ErrorMessage = value;
+        }
+
+        // Команди для збереження
+        public IAsyncRelayCommand SaveOperationCommand { get; }
+        public IAsyncRelayCommand CreateActionCommand => SaveOperationCommand; // Псевдонім для CreateOperationPage.xaml
+
+        public CreateOperationViewModel()
+        {
+            _apiService = new ApiService();
+            SaveOperationCommand = new AsyncRelayCommand(SaveOperationAsync);
+        }
+
+        private async Task SaveOperationAsync()
         {
             if (IsBusy) return;
+
+            if (ItemId <= 0)
+            {
+                await Shell.Current.DisplayAlert("Помилка", "Введіть коректний ID товару", "OK");
+                return;
+            }
+
+            if (Quantity <= 0)
+            {
+                await Shell.Current.DisplayAlert("Помилка", "Кількість має бути більшою за 0", "OK");
+                return;
+            }
 
             try
             {
                 IsBusy = true;
                 ErrorMessage = string.Empty;
 
-                // Резервна встановка BaseAddress під порт 5024
-                if (_httpClient.BaseAddress == null)
+                var dto = new UserActionDto
                 {
-                    _httpClient.BaseAddress = new Uri("http://localhost:5024/");
-                }
-
-                // Вкажіть ваше DTO/модель для збереження операції
-                var newAction = new 
-                {
-                    // Поля вашої моделі (наприклад, ItemId, Quantity, ActionType)
+                    UserId = 3,
+                    ItemId = ItemId,
+                    Quantity = Quantity,
+                    ActionType = ActionType,
+                    Note = Note
                 };
 
-                var response = await _httpClient.PostAsJsonAsync("api/actions", newAction);
+                bool success = await _apiService.CreateActionAsync(dto);
 
-                if (response.IsSuccessStatusCode)
+                if (success)
                 {
                     await Shell.Current.DisplayAlert("Успіх", "Операцію успішно збережено!", "OK");
                     await Shell.Current.GoToAsync("//ItemsPage");
                 }
                 else
                 {
-                    await Shell.Current.DisplayAlert("Помилка", $"Код помилки сервера: {response.StatusCode}", "OK");
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                ErrorMessage = $"Помилка мережі: {ex.Message}";
-                if (Shell.Current != null)
-                {
-                    await Shell.Current.DisplayAlert("Помилка мережі", "Не вдалося з'єднатися з сервером.", "OK");
+                    await Shell.Current.DisplayAlert("Помилка", "Не вдалося виконати операцію на сервері.", "OK");
                 }
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Виникла помилка: {ex.Message}";
-                if (Shell.Current != null)
-                {
-                    await Shell.Current.DisplayAlert("Помилка", ex.Message, "OK");
-                }
+                await Shell.Current.DisplayAlert("Помилка", ex.Message, "OK");
             }
             finally
             {

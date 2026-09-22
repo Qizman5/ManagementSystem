@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:ClientApp.Models"
+             x:Class="ClientApp.Views.Admin.AdminPage"
+             Title="Адмін-панель ClientApp"
+             BackgroundColor="#F4F5F9">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="20">
+
+            <!-- Заголовок -->
+            <Frame BackgroundColor="#1E1E2C" CornerRadius="12" Padding="16" HasShadow="True">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Панель Адміністратора (ClientApp)" TextColor="White" FontSize="18" FontAttributes="Bold" />
+                    <Label Text="Керування товарами, користувачами та логами" TextColor="#A0A0B0" FontSize="12" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Перемикач вкладок -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0" Text="Управління Товарами" Clicked="OnShowItemsClicked" BackgroundColor="#2E7D32" TextColor="White" FontAttributes="Bold" CornerRadius="8"/>
+                <Button Grid.Column="1" Text="Дії Користувачів" Clicked="OnShowLogsClicked" BackgroundColor="#1565C0" TextColor="White" FontAttributes="Bold" CornerRadius="8"/>
+            </Grid>
+
+            <!-- СЕКЦІЯ 1: Товари (Редагування / Видалення) -->
+            <VerticalStackLayout x:Name="ItemsSection" Spacing="10" IsVisible="True">
+                <Label Text="Список товарів (Адмін-режим)" FontSize="16" FontAttributes="Bold" TextColor="#1E1E2C" />
+
+                <CollectionView ItemsSource="{Binding Items}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:Item">
+                            <Frame Margin="0,4" Padding="12" BackgroundColor="White" CornerRadius="8" HasShadow="False" BorderColor="#E0E0E0">
+                                <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="8" VerticalOptions="Center">
+                                    <VerticalStackLayout Grid.Column="0">
+                                        <Label Text="{Binding Name}" FontAttributes="Bold" TextColor="#212121" FontSize="14" />
+                                        <Label Text="{Binding Quantity, StringFormat='Кількість: {0} шт.'}" TextColor="#757575" FontSize="12" />
+                                    </VerticalStackLayout>
+
+                                    <!-- Кнопка Редагувати -->
+                                    <Button Grid.Column="1" Text="✎" BackgroundColor="#FFA000" TextColor="White" WidthRequest="40" HeightRequest="40" CornerRadius="20" Clicked="OnEditItemClicked" CommandParameter="{Binding .}" />
+
+                                    <!-- Кнопка Видалити -->
+                                    <Button Grid.Column="2" Text="🗑" BackgroundColor="#D32F2F" TextColor="White" WidthRequest="40" HeightRequest="40" CornerRadius="20" Clicked="OnDeleteItemClicked" CommandParameter="{Binding .}" />
+                                </Grid>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+            <!-- СЕКЦІЯ 2: Логи дій користувачів -->
+            <VerticalStackLayout x:Name="LogsSection" Spacing="10" IsVisible="False">
+                <Label Text="Історія дій користувачів" FontSize="16" FontAttributes="Bold" TextColor="#1E1E2C" />
+
+                <CollectionView ItemsSource="{Binding UserActions}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame Margin="0,4" Padding="12" BackgroundColor="White" CornerRadius="8" HasShadow="False" BorderColor="#E0E0E0">
+                                <VerticalStackLayout Spacing="2">
+                                    <Grid ColumnDefinitions="*, Auto">
+                                        <Label Text="{Binding Username}" FontAttributes="Bold" TextColor="#1565C0" FontSize="13" />
+                                        <Label Grid.Column="1" Text="{Binding Timestamp, StringFormat='{0:dd.MM HH:mm}'}" TextColor="#9E9E9E" FontSize="11" />
+                                    </Grid>
+                                    <Label Text="{Binding ActionType}" TextColor="#2E7D32" FontAttributes="Bold" FontSize="12" />
+                                    <Label Text="{Binding Details}" TextColor="#616161" FontSize="12" />
+                                </VerticalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
