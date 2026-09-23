@@ -14,16 +14,17 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. Додаємо підтримку MVC (Контролери + Razor Views)
 builder.Services.AddControllersWithViews();
 
-// 2. Додаємо Swagger з підтримкою JWT-авторизації та захистом від конфліктів
+// 2. Додаємо Swagger з підтримкою JWT-авторизації та чистою назвою "Warehouse"
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Warehouse API", Version = "v1" });
+    // Заголовок Warehouse без версії
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Warehouse", Version = null });
 
     // Унікальні Schema ID (для уникнення дублів типів)
     options.CustomSchemaIds(type => type.FullName);
 
-    // Автоматичне вирішення конфліктів дій (якщо десь збігаються HTTP-методи)
+    // Автоматичне вирішення конфліктів дій
     options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -175,12 +176,23 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse API V1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse");
+        c.DocumentTitle = "Warehouse";
         c.RoutePrefix = "swagger";
         c.EnablePersistAuthorization();
-        
-        // Візуально приховує блок Schemas в інтерфейсі без зламу посилань
-        c.DefaultModelsExpandDepth(-1); 
+        c.DefaultModelsExpandDepth(-1);
+
+        // Впроваджуємо CSS-стилі прямо в інтерфейс Swagger, щоб приховати URL і бейджі v1/OAS3
+        c.HeadContent = @"
+            <style>
+                .swagger-ui .info .base-url,
+                .swagger-ui .info .url,
+                .swagger-ui .info .title small,
+                .swagger-ui .info .version,
+                .swagger-ui .info .version-stamp {
+                    display: none !important;
+                }
+            </style>";
     });
 }
 
