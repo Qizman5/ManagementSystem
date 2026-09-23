@@ -5,9 +5,14 @@ using ServerApp.Models;
 
 namespace ServerApp.Controllers.Api
 {
+    /// <summary>
+    /// RESTful API для управління ресурсом 'items' (Товари складе)
+    /// Відповідає специфікації OpenAPI та стандартам Integrate.io
+    /// </summary>
     [ApiController]
     [Route("api/v1/items")]
     [Produces("application/json")]
+    [Consumes("application/json")]
     [Authorize(Policy = "BearerOrCookie")]
     public class ItemsApiController : ControllerBase
     {
@@ -18,20 +23,34 @@ namespace ServerApp.Controllers.Api
             _context = context;
         }
 
-        // GET: api/v1/items
+        /// <summary>
+        /// READ (List): Отримати список товарів з фільтрацією та пагінацією
+        /// GET /api/v1/items?search=name&limit=25&offset=0
+        /// </summary>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Item>))]
-        public async Task<ActionResult<IEnumerable<Item>>> GetItems([FromQuery] int limit = 25, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<Item>>> GetItems(
+            [FromQuery] string? search = null,
+            [FromQuery] int limit = 25,
+            [FromQuery] int offset = 0)
         {
             if (limit > 100) limit = 100;
 
-            return await _context.Items
-                .Skip(offset)
-                .Take(limit)
-                .ToListAsync();
+            var query = _context.Items.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(i => i.Name.Contains(search) || i.Description.Contains(search));
+            }
+
+            var items = await query.Skip(offset).Take(limit).ToListAsync();
+            return Ok(items);
         }
 
-        // GET: api/v1/items/5
+        /// <summary>
+        /// READ (Single): Отримати конкретний ресурс за його ID
+        /// GET /api/v1/items/{id}
+        /// </summary>
         [HttpGet("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Item))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -41,15 +60,17 @@ namespace ServerApp.Controllers.Api
 
             if (item == null)
             {
-                return NotFound(new { message = $"Товар з ID {id} не знайдено." });
+                return NotFound(new { error = "ResourceNotFound", message = $"Товар з ID {id} не знайдено." });
             }
 
             return Ok(item);
         }
 
-        // POST: api/v1/items
+        /// <summary>
+        /// CREATE: Створити новий ресурс
+        /// POST /api/v1/items
+        /// </summary>
         [HttpPost]
-        [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Item))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<Item>> CreateItem([FromBody] Item item)
@@ -59,12 +80,15 @@ namespace ServerApp.Controllers.Api
             _context.Items.Add(item);
             await _context.SaveChangesAsync();
 
+            // Повертає статус 201 Created та заголовок 'Location' із посиланням на новий ресурс
             return CreatedAtAction(nameof(GetItemById), new { id = item.Id }, item);
         }
 
-        // PUT: api/v1/items/5
+        /// <summary>
+        /// UPDATE (Full): Повне оновлення ресурсу
+        /// PUT /api/v1/items/{id}
+        /// </summary>
         [HttpPut("{id:int}")]
-        [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Item))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -72,7 +96,7 @@ namespace ServerApp.Controllers.Api
         {
             if (id != item.Id)
             {
-                return BadRequest(new { message = "ID у шляху та у тілі запиту не збігаються." });
+                return BadRequest(new { error = "MismatchedId", message = "ID у маршруті та у тілі запиту не збігаються." });
             }
 
             _context.Entry(item).State = EntityState.Modified;
@@ -85,7 +109,7 @@ namespace ServerApp.Controllers.Api
             {
                 if (!_context.Items.Any(e => e.Id == id))
                 {
-                    return NotFound(new { message = $"Товар з ID {id} не знайдено." });
+                    return NotFound(new { error = "ResourceNotFound", message = $"Товар з ID {id} не знайдено." });
                 }
                 throw;
             }
@@ -93,18 +117,25 @@ namespace ServerApp.Controllers.Api
             return Ok(item);
         }
 
-        // DELETE: api/v1/items/5
+        /// <summary>
+        /// DELETE: Видалення ресурсу
+        /// DELETE /api/v1/items/{id}
+        /// </summary>
         [HttpDelete("{id:int}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteItem(int id)
         {
             var item = await _context.Items.FindAsync(id);
-            if (item == null) return NotFound(new { message = $"Товар з ID {id} не знайдено." });
+            if (item == null)
+            {
+                return NotFound(new { error = "ResourceNotFound", message = $"Товар з ID {id} не знайдено." });
+            }
 
             _context.Items.Remove(item);
             await _context.SaveChangesAsync();
 
+            // За стандартом REST відповідає 204 No Content при успішному видаленні
             return NoContent();
         }
     }
