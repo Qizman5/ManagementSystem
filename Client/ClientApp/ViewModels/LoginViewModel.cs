@@ -66,17 +66,25 @@ namespace ClientApp.ViewModels
                     await SecureStorage.Default.SetAsync("jwt_token", "user_authenticated_session_token");
                     await SecureStorage.Default.SetAsync("user_email", cleanUsername);
 
-                    // 4. Активуємо адмін-панель у Flyout-меню ТІЛЬКИ для адміна
+                    // 4. Активуємо або ховаємо адмін-панель у Flyout-меню
                     if (Shell.Current is AppShell appShell)
                     {
                         appShell.SetAdminAccess(isAdmin);
                     }
 
-                    // 5. Невелика затримка для збереження сховища перед навігацією
                     await Task.Delay(100);
 
-                    // 6. Переходимо на головну сторінку
-                    await Shell.Current.GoToAsync("//ItemsPage");
+                    // 5. Перенаправлення залежно від ролі:
+                    if (isAdmin)
+                    {
+                        // Адміна ведемо одразу в Адмін-панель
+                        await Shell.Current.GoToAsync("//AdminPage");
+                    }
+                    else
+                    {
+                        // Звичайного користувача — у список товарів
+                        await Shell.Current.GoToAsync("//ItemsPage");
+                    }
                 }
                 else
                 {
@@ -87,7 +95,7 @@ namespace ClientApp.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"[LoginViewModel Exception]: {ex.Message}");
                 
-                // Резервний вхід для адміна у випадку відсутності зв'язку з сервером
+                // Резервний автономний вхід для адміна у випадку відсутності зв'язку з сервером
                 if (cleanUsername.Equals("arotar2005@gmail.com", StringComparison.OrdinalIgnoreCase))
                 {
                     App.IsAuthenticated = true;
@@ -99,7 +107,7 @@ namespace ClientApp.ViewModels
                         appShell.SetAdminAccess(true);
                     }
 
-                    await Shell.Current.GoToAsync("//ItemsPage");
+                    await Shell.Current.GoToAsync("//AdminPage");
                 }
                 else
                 {

@@ -23,7 +23,7 @@
         <ShellContent ContentTemplate="{DataTemplate views:CreateOperationPage}" />
     </FlyoutItem>
 
-    <!-- 4. Адмін-панель (Прихована за замовчуванням для всіх) -->
+    <!-- 4. Адмін-панель (Прихована за замовчуванням для всіх, активується для arotar2005@gmail.com) -->
     <FlyoutItem x:Name="AdminFlyoutItem" Title="🛡️ Адмін-панель" Route="AdminPage" IsVisible="False">
         <ShellContent ContentTemplate="{DataTemplate adminViews:AdminPage}" />
     </FlyoutItem>
