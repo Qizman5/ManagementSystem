@@ -52,12 +52,23 @@ namespace ClientApp.ViewModels
             {
                 IsBusy = true;
 
-                // 1. Запит до API
+                // 1. Виконуємо запит авторизації до API
                 bool isSuccess = await _apiService.LoginAsync(cleanUsername, cleanPassword);
 
                 if (isSuccess)
                 {
-                    // 2. Успішний перехід до сторінки товарів
+                    // 2. Зберігаємо токен авторизації перед переходом
+                    await SecureStorage.Default.SetAsync("jwt_token", "authenticated_user_session");
+
+                    // 3. Перевіряємо, чи є користувач адміністратором
+                    bool isAdmin = cleanUsername.Equals("arotar2005@gmail.com", StringComparison.OrdinalIgnoreCase);
+
+                    if (Shell.Current is AppShell appShell)
+                    {
+                        appShell.SetAdminAccess(isAdmin);
+                    }
+
+                    // 4. Тільки після повного збереження токена виконуємо перехід
                     await Shell.Current.GoToAsync("//ItemsPage");
                 }
                 else

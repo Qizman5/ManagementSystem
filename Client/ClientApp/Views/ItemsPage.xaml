@@ -6,6 +6,11 @@
              Title="Список товарів"
              BackgroundColor="#F4F5F9">
 
+    <!-- Кнопка Вийти у верхньому правому кутку шапки -->
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="🚪 Вийти" Clicked="OnLogoutClicked" Priority="0" />
+    </ContentPage.ToolbarItems>
+
     <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="16" RowSpacing="12">
 
         <!-- Заголовок -->
@@ -25,7 +30,7 @@
                 CornerRadius="8" 
                 HeightRequest="40" />
 
-        <!-- Список товарів (Займає весь вільний простір) -->
+        <!-- Список товарів -->
         <RefreshView Grid.Row="2" 
                      IsRefreshing="{Binding IsBusy}" 
                      Command="{Binding LoadItemsCommand}">

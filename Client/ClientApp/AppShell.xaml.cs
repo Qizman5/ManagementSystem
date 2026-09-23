@@ -21,23 +21,36 @@ namespace ClientApp
         {
             base.OnNavigating(args);
 
+            // Отримуємо токен з безпечного сховища
             string? token = await SecureStorage.Default.GetAsync("jwt_token");
             bool isAuthenticated = !string.IsNullOrEmpty(token);
 
-            var protectedPages = new[] { "ItemsPage", "CreateOperationPage", "AdminPage" };
+            // Отримуємо точний шлях, куди прямує користувач
             string targetLocation = args.Target?.Location?.OriginalString ?? string.Empty;
 
+            // Якщо користувач прямує на сторінку авторизації — НЕ блокуємо її ніколи
+            if (targetLocation.Contains("LoginPage"))
+            {
+                return;
+            }
+
+            // Список захищених сторінок
+            var protectedPages = new[] { "ItemsPage", "CreateOperationPage", "AdminPage" };
+
+            // Перевіряємо, чи намагається неавторизований користувач зайти на захищену сторінку
             if (!isAuthenticated && protectedPages.Any(page => targetLocation.Contains(page)))
             {
                 args.Cancel();
 
-                await DisplayAlert("Доступ обмежено", "Будь ласка, спочатку увійдіть або зареєструйтеся в системі.", "OK");
-
-                await Shell.Current.GoToAsync("//LoginPage");
+                // Викликуємо сповіщення асинхронно у головному потоці, щоб не блокувати навігаційний стек
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    await DisplayAlert("Доступ обмежено", "Будь ласка, спочатку увійдіть або зареєструйтеся в системі.", "OK");
+                    await Shell.Current.GoToAsync("//LoginPage");
+                });
             }
         }
 
-        // Обробник події виходу для MenuItem у XAML
         public async void OnLogoutClicked(object sender, EventArgs e)
         {
             bool confirm = await DisplayAlert("Підтвердження", "Ви дійсно бажаєте вийти з акаунту?", "Так", "Ні");
@@ -45,7 +58,6 @@ namespace ClientApp
             if (confirm)
             {
                 SecureStorage.Default.Remove("jwt_token");
-
                 SetAdminAccess(false);
 
                 FlyoutIsPresented = false;
