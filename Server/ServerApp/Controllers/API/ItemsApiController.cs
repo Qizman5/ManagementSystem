@@ -18,9 +18,7 @@ namespace ServerApp.Controllers.Api
             _context = context;
         }
 
-        /// <summary>
-        /// Отримати список усіх товарів (з підтримкою пагінації)
-        /// </summary>
+        // GET: api/v1/items
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Item>))]
         public async Task<ActionResult<IEnumerable<Item>>> GetItems([FromQuery] int limit = 25, [FromQuery] int offset = 0)
@@ -33,9 +31,7 @@ namespace ServerApp.Controllers.Api
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Отримати конкретний товар за його ID
-        /// </summary>
+        // GET: api/v1/items/5
         [HttpGet("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Item))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -51,9 +47,7 @@ namespace ServerApp.Controllers.Api
             return Ok(item);
         }
 
-        /// <summary>
-        /// Створити новий товар
-        /// </summary>
+        // POST: api/v1/items
         [HttpPost]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Item))]
@@ -68,9 +62,7 @@ namespace ServerApp.Controllers.Api
             return CreatedAtAction(nameof(GetItemById), new { id = item.Id }, item);
         }
 
-        /// <summary>
-        /// Оновити існуючий товар (PUT)
-        /// </summary>
+        // PUT: api/v1/items/5
         [HttpPut("{id:int}")]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Item))]
@@ -101,9 +93,7 @@ namespace ServerApp.Controllers.Api
             return Ok(item);
         }
 
-        /// <summary>
-        /// Видалити товар
-        /// </summary>
+        // DELETE: api/v1/items/5
         [HttpDelete("{id:int}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
