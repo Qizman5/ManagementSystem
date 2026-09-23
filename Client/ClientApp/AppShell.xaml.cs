@@ -1,6 +1,8 @@
+using System;
 using ClientApp.Views;
 using ClientApp.Views.Admin;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 
 namespace ClientApp
 {
@@ -15,50 +17,30 @@ namespace ClientApp
             Routing.RegisterRoute(nameof(CreateOperationPage), typeof(CreateOperationPage));
             Routing.RegisterRoute(nameof(ItemsPage), typeof(ItemsPage));
             Routing.RegisterRoute(nameof(AdminPage), typeof(AdminPage));
+            Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
+            Routing.RegisterRoute(nameof(RegisterPage), typeof(RegisterPage));
         }
 
-        protected override async void OnNavigating(ShellNavigatingEventArgs args)
-        {
-            base.OnNavigating(args);
-
-            string targetLocation = args.Target?.Location?.OriginalString ?? string.Empty;
-
-            // 1. Пропускаємо без перевірок, якщо перехід іде на LoginPage або під час скидання навігації
-            if (targetLocation.Contains("LoginPage") || string.IsNullOrEmpty(targetLocation))
-            {
-                return;
-            }
-
-            // 2. Перевіряємо наявність токена
-            string? token = await SecureStorage.Default.GetAsync("jwt_token");
-            bool isAuthenticated = !string.IsNullOrEmpty(token);
-
-            var protectedPages = new[] { "ItemsPage", "CreateOperationPage", "AdminPage" };
-
-            // 3. Блокуємо ТІЛЬКИ якщо токена дійсно немає і сторінка захищена
-            if (!isAuthenticated && protectedPages.Any(page => targetLocation.Contains(page)))
-            {
-                args.Cancel();
-
-                MainThread.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert("Доступ обмежено", "Будь ласка, спочатку увійдіть або зареєструйтеся в системі.", "OK");
-                    await Shell.Current.GoToAsync("//LoginPage");
-                });
-            }
-        }
-
+        // Безпечний вихід з акаунту
         public async void OnLogoutClicked(object sender, EventArgs e)
         {
             bool confirm = await DisplayAlert("Підтвердження", "Ви дійсно бажаєте вийти з акаунту?", "Так", "Ні");
             
             if (confirm)
             {
+                // 1. Очищаємо сесію
+                App.IsAuthenticated = false;
                 SecureStorage.Default.Remove("jwt_token");
+                SecureStorage.Default.Remove("user_email");
+
+                // 2. Скидаємо права адміна
                 SetAdminAccess(false);
 
+                // 3. Закриваємо бокове меню
                 FlyoutIsPresented = false;
-                await Shell.Current.GoToAsync("//LoginPage");
+
+                // 4. Безпечно повертаємо на екран авторизації
+                await GoToAsync("//LoginPage");
             }
         }
 
@@ -71,6 +53,7 @@ namespace ClientApp
                     _adminFlyoutItem = new FlyoutItem
                     {
                         Title = "🛡️ Адмін-панель",
+                        Route = nameof(AdminPage),
                         Items =
                         {
                             new ShellContent
