@@ -9,18 +9,18 @@ namespace ClientApp
 {
     public partial class AppShell : Shell
     {
+        private FlyoutItem? _adminFlyoutItem;
+
         public AppShell()
         {
             InitializeComponent();
 
-            // Реєструємо маршрути
             Routing.RegisterRoute(nameof(CreateOperationPage), typeof(CreateOperationPage));
             Routing.RegisterRoute(nameof(ItemsPage), typeof(ItemsPage));
             Routing.RegisterRoute(nameof(AdminPage), typeof(AdminPage));
             Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
             Routing.RegisterRoute(nameof(RegisterPage), typeof(RegisterPage));
 
-            // Перевірка прав при запуску
             CheckAdminStatus();
         }
 
@@ -35,16 +35,34 @@ namespace ClientApp
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                if (AdminFlyoutItem != null)
+                if (isAdmin)
                 {
-                    AdminFlyoutItem.IsVisible = isAdmin;
-                }
-
-                foreach (var item in Items)
-                {
-                    if (item.Route == "AdminPage" || (item.Title != null && item.Title.Contains("Адмін")))
+                    if (_adminFlyoutItem == null)
                     {
-                        item.IsVisible = isAdmin;
+                        _adminFlyoutItem = new FlyoutItem
+                        {
+                            Title = "🛡️ Адмін-панель",
+                            Route = "AdminPage",
+                            Items =
+                            {
+                                new ShellContent
+                                {
+                                    ContentTemplate = new DataTemplate(typeof(AdminPage)),
+                                    Route = "AdminPage"
+                                }
+                            }
+                        };
+
+                        // Вставляємо кнопку прямо в меню
+                        Items.Add(_adminFlyoutItem);
+                    }
+                }
+                else
+                {
+                    if (_adminFlyoutItem != null && Items.Contains(_adminFlyoutItem))
+                    {
+                        Items.Remove(_adminFlyoutItem);
+                        _adminFlyoutItem = null;
                     }
                 }
             });
