@@ -7,25 +7,31 @@
     Title="WMS Mobile"
     FlyoutBehavior="Flyout">
 
-    <!-- Авторизація -->
+    <!-- 1. Вхід / Авторизація (Стартова сторінка) -->
     <FlyoutItem Title="Авторизація">
         <ShellContent
+            Title="Авторизація"
             ContentTemplate="{DataTemplate views:LoginPage}"
             Route="LoginPage" />
     </FlyoutItem>
 
-    <!-- Список товарів -->
+    <!-- 2. Список товарів (Захищена сторінка) -->
     <FlyoutItem Title="Список товарів">
         <ShellContent
+            Title="Список товарів"
             ContentTemplate="{DataTemplate views:ItemsPage}"
             Route="ItemsPage" />
     </FlyoutItem>
 
-    <!-- Створення операції -->
+    <!-- 3. Створення операції (Захищена сторінка) -->
     <FlyoutItem Title="Створити операцію">
         <ShellContent
+            Title="Створити операцію"
             ContentTemplate="{DataTemplate views:CreateOperationPage}"
             Route="CreateOperationPage" />
     </FlyoutItem>
+
+    <!-- Кнопка виходу внизу бічного меню -->
+    <MenuItem Text="🚪 Вийти з акаунту" Clicked="OnLogoutClicked" />
 
 </Shell>

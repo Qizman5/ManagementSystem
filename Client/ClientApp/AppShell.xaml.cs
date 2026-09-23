@@ -6,24 +6,47 @@ namespace ClientApp
 {
     public partial class AppShell : Shell
     {
-        // Додано '?' для позначення, що поле може містити null
         private FlyoutItem? _adminFlyoutItem;
 
         public AppShell()
         {
             InitializeComponent();
 
+            // Реєстрація маршрутів для навігації
             Routing.RegisterRoute(nameof(CreateOperationPage), typeof(CreateOperationPage));
             Routing.RegisterRoute(nameof(ItemsPage), typeof(ItemsPage));
             Routing.RegisterRoute(nameof(AdminPage), typeof(AdminPage));
         }
 
-        // Динамічне управління видимістю адмінки
+        // Виправлено тип параметра: ShellNavigatingEventArgs замість ShellNavigatingArgs
+        protected override async void OnNavigating(ShellNavigatingEventArgs args)
+        {
+            base.OnNavigating(args);
+
+            // Виправлено CS8600: додано '?' для безпечної обробки null
+            string? token = await SecureStorage.Default.GetAsync("jwt_token");
+            bool isAuthenticated = !string.IsNullOrEmpty(token);
+
+            // Список захищених сторінок
+            var protectedPages = new[] { "ItemsPage", "CreateOperationPage", "AdminPage" };
+
+            // Перевірка шляху
+            string targetLocation = args.Target?.Location?.OriginalString ?? string.Empty;
+
+            if (!isAuthenticated && protectedPages.Any(page => targetLocation.Contains(page)))
+            {
+                args.Cancel();
+
+                await DisplayAlert("Доступ обмежено", "Будь ласка, спочатку увійдіть або зареєструйтеся в системі.", "OK");
+
+                await Shell.Current.GoToAsync("//LoginPage");
+            }
+        }
+
         public void SetAdminAccess(bool isAdmin)
         {
             if (isAdmin)
             {
-                // Якщо пункт ще не додано — додаємо в бічне меню
                 if (_adminFlyoutItem == null)
                 {
                     _adminFlyoutItem = new FlyoutItem
@@ -44,7 +67,6 @@ namespace ClientApp
             }
             else
             {
-                // Якщо звичайний користувач — видаляємо адмінку з меню
                 if (_adminFlyoutItem != null && Items.Contains(_adminFlyoutItem))
                 {
                     Items.Remove(_adminFlyoutItem);
