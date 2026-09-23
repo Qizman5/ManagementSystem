@@ -1,11 +1,13 @@
-﻿namespace ClientApp;
-
-public partial class App : Application
+﻿namespace ClientApp
 {
-	public App()
-	{
-		InitializeComponent();
+    public partial class App : Application
+    {
+        public static bool IsAuthenticated { get; set; } = false;
 
-		MainPage = new AppShell();
-	}
+        public App()
+        {
+            InitializeComponent();
+            MainPage = new AppShell();
+        }
+    }
 }

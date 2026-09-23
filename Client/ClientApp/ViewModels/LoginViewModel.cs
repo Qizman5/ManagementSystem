@@ -59,19 +59,23 @@ namespace ClientApp.ViewModels
                 // Якщо сервер повернув true АБО це логін адміна — пропускаємо в систему
                 if (isSuccess || isAdmin)
                 {
-                    // 2. Гарантовано записуємо токен у сховище
-                    await SecureStorage.Default.SetAsync("jwt_token", "admin_authenticated_session_token");
+                    // 2. Встановлюємо стан авторизації
+                    App.IsAuthenticated = true;
 
-                    // 3. Активуємо адмін-панель у Flyout-меню
+                    // 3. Зберігаємо токен та email користувача у SecureStorage
+                    await SecureStorage.Default.SetAsync("jwt_token", "user_authenticated_session_token");
+                    await SecureStorage.Default.SetAsync("user_email", cleanUsername);
+
+                    // 4. Активуємо адмін-панель у Flyout-меню ТІЛЬКИ для адміна
                     if (Shell.Current is AppShell appShell)
                     {
                         appShell.SetAdminAccess(isAdmin);
                     }
 
-                    // 4. Невеликий затримка для гарантованого збереження сховища перед навігацією
+                    // 5. Невелика затримка для збереження сховища перед навігацією
                     await Task.Delay(100);
 
-                    // 5. Переходимо на головну сторінку
+                    // 6. Переходимо на головну сторінку
                     await Shell.Current.GoToAsync("//ItemsPage");
                 }
                 else
@@ -83,11 +87,18 @@ namespace ClientApp.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"[LoginViewModel Exception]: {ex.Message}");
                 
-                // Резервний вход для адміна у випадку відсутності зв'язку з сервером
+                // Резервний вхід для адміна у випадку відсутності зв'язку з сервером
                 if (cleanUsername.Equals("arotar2005@gmail.com", StringComparison.OrdinalIgnoreCase))
                 {
+                    App.IsAuthenticated = true;
                     await SecureStorage.Default.SetAsync("jwt_token", "admin_offline_token");
-                    if (Shell.Current is AppShell appShell) appShell.SetAdminAccess(true);
+                    await SecureStorage.Default.SetAsync("user_email", cleanUsername);
+
+                    if (Shell.Current is AppShell appShell)
+                    {
+                        appShell.SetAdminAccess(true);
+                    }
+
                     await Shell.Current.GoToAsync("//ItemsPage");
                 }
                 else

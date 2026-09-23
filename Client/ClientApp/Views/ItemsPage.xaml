@@ -6,9 +6,15 @@
              Title="Список товарів"
              BackgroundColor="#F4F5F9">
 
-    <!-- Кнопка Вийти у верхньому правому кутку шапки -->
+    <!-- Кнопки в верхньому меню (Адмінка показується тільки для адміна) -->
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="🚪 Вийти" Clicked="OnLogoutClicked" Priority="0" />
+        <ToolbarItem x:Name="AdminToolbarItem" 
+                     Text="🛡️ Адмінка" 
+                     Clicked="OnAdminClicked" 
+                     Priority="0" />
+        <ToolbarItem Text="🚪 Вийти" 
+                     Clicked="OnLogoutClicked" 
+                     Priority="1" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="16" RowSpacing="12">
