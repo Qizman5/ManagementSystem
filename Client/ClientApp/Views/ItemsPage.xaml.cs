@@ -25,11 +25,29 @@ namespace ClientApp.Views
             }
         }
 
-        private async void OnCreateOperationClicked(object sender, EventArgs e)
+        // Обробник натискання кнопки "Вийти" у XAML
+        public async void OnLogoutClicked(object sender, EventArgs e)
+        {
+            bool confirm = await DisplayAlert("Підтвердження", "Ви дійсно бажаєте вийти з акаунту?", "Так", "Ні");
+            
+            if (confirm)
+            {
+                SecureStorage.Default.Remove("jwt_token");
+
+                if (Shell.Current is AppShell appShell)
+                {
+                    appShell.SetAdminAccess(false);
+                }
+
+                await Shell.Current.GoToAsync("//LoginPage");
+            }
+        }
+
+        // Обробник натискання кнопки "Створити нову операцію" у XAML
+        public async void OnCreateOperationClicked(object sender, EventArgs e)
         {
             try
             {
-                // Надійний перехід на сторінку створення операції
                 if (Shell.Current != null)
                 {
                     await Shell.Current.GoToAsync("//CreateOperationPage");
@@ -42,7 +60,6 @@ namespace ClientApp.Views
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[Navigation Error]: {ex.Message}");
-                // Якщо маршрут Shell некоректний — відкриваємо через стандартну навігацію
                 await Navigation.PushAsync(new CreateOperationPage());
             }
         }
