@@ -21,28 +21,25 @@ namespace ClientApp
         {
             base.OnNavigating(args);
 
-            // Отримуємо токен з безпечного сховища
-            string? token = await SecureStorage.Default.GetAsync("jwt_token");
-            bool isAuthenticated = !string.IsNullOrEmpty(token);
-
-            // Отримуємо точний шлях, куди прямує користувач
             string targetLocation = args.Target?.Location?.OriginalString ?? string.Empty;
 
-            // Якщо користувач прямує на сторінку авторизації — НЕ блокуємо її ніколи
-            if (targetLocation.Contains("LoginPage"))
+            // 1. Пропускаємо без перевірок, якщо перехід іде на LoginPage або під час скидання навігації
+            if (targetLocation.Contains("LoginPage") || string.IsNullOrEmpty(targetLocation))
             {
                 return;
             }
 
-            // Список захищених сторінок
+            // 2. Перевіряємо наявність токена
+            string? token = await SecureStorage.Default.GetAsync("jwt_token");
+            bool isAuthenticated = !string.IsNullOrEmpty(token);
+
             var protectedPages = new[] { "ItemsPage", "CreateOperationPage", "AdminPage" };
 
-            // Перевіряємо, чи намагається неавторизований користувач зайти на захищену сторінку
+            // 3. Блокуємо ТІЛЬКИ якщо токена дійсно немає і сторінка захищена
             if (!isAuthenticated && protectedPages.Any(page => targetLocation.Contains(page)))
             {
                 args.Cancel();
 
-                // Викликуємо сповіщення асинхронно у головному потоці, щоб не блокувати навігаційний стек
                 MainThread.BeginInvokeOnMainThread(async () =>
                 {
                     await DisplayAlert("Доступ обмежено", "Будь ласка, спочатку увійдіть або зареєструйтеся в системі.", "OK");
