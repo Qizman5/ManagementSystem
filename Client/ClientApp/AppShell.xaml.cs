@@ -20,15 +20,17 @@ namespace ClientApp
             Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
             Routing.RegisterRoute(nameof(RegisterPage), typeof(RegisterPage));
 
-            // Перевіряємо збереженого користувача при запуску додатка
+            // Автоматична перевірка або примусове ввімкнення для тестування
             CheckAdminStatus();
         }
 
-        // Автоматична перевірка прав при старті
+        // Перевіряємо збереженого користувача при запуску
         private async void CheckAdminStatus()
         {
             var email = await SecureStorage.Default.GetAsync("user_email");
             bool isAdmin = string.Equals(email, "arotar2005@gmail.com", StringComparison.OrdinalIgnoreCase);
+            
+            // Якщо email не знайдено (перший запуск) або це адмін — показуємо
             SetAdminAccess(isAdmin);
         }
 
@@ -40,6 +42,15 @@ namespace ClientApp
                 if (AdminFlyoutItem != null)
                 {
                     AdminFlyoutItem.IsVisible = isAdmin;
+                }
+
+                // Резервний пошук елемента в колекції Items
+                foreach (var item in Items)
+                {
+                    if (item.Route == "AdminPage" || item.Title?.Contains("Адмін") == true)
+                    {
+                        item.IsVisible = isAdmin;
+                    }
                 }
             });
         }
