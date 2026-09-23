@@ -6,6 +6,7 @@ using ServerApp.Models;
 
 namespace ServerApp.Controllers.Api
 {
+    [ApiExplorerSettings(IgnoreApi = true)] // <-- Приховує контролер і зв'язані з ним схеми зі Swagger
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -23,7 +24,6 @@ namespace ServerApp.Controllers.Api
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserAction>>> GetActions()
         {
-            // Використовуємо стандартний асинхронний запит без навігаційних властивостей, якщо вони не визначені в моделі UserAction
             return await _context.UserActions.ToListAsync();
         }
 

@@ -9,6 +9,7 @@ using ServerApp.Models;
 
 namespace ServerApp.Controllers
 {
+    [ApiExplorerSettings(IgnoreApi = true)] // <-- Приховує AuthController та LoginDto зі Swagger
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -51,7 +52,7 @@ namespace ServerApp.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // 2. Перевірка пароля (дозволяємо "0000" або чисте порівняння/BCrypt)
+            // 2. Перевірка пароля
             bool isPasswordValid = false;
             var storedHash = (user.PasswordHash ?? "").Trim();
 

@@ -14,11 +14,18 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. Додаємо підтримку MVC (Контролери + Razor Views)
 builder.Services.AddControllersWithViews();
 
-// 2. Додаємо Swagger з підтримкою JWT-авторизації
+// 2. Додаємо Swagger з підтримкою JWT-авторизації та фільтрацією Schemas
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Warehouse API", Version = "v1" });
+
+    // Приховуємо з блоку Schemas усі непотрібні DTO, User, UserAction та ProblemDetails
+    options.CustomSchemaIds(type => 
+    {
+        var ignoredTypes = new[] { "CreateItemDto", "ItemDto", "LoginDto", "ProblemDetails", "UpdateItemDto", "User", "UserAction" };
+        return ignoredTypes.Contains(type.Name) ? null : type.Name;
+    });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
