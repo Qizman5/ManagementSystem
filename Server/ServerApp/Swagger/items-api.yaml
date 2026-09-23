@@ -1,0 +1,148 @@
+swagger: 3.1.0
+info:
+  title: Warehouse Items API
+  version: 1.0.0
+  description: REST API для управління складом та товарами.
+paths:
+  /api/v1/items:
+    get:
+      summary: Отримати список товарів
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 25
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Успішний список товарів
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemDto'
+    post:
+      summary: Створити товар
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItemDto'
+      responses:
+        '201':
+          description: Товар успішно створено
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemDto'
+        '400':
+          description: Некоректні вхідні дані
+
+  /api/v1/items/{id}:
+    get:
+      summary: Отримати товар за ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Товар знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemDto'
+        '404':
+          description: Товар не знайдено
+
+    put:
+      summary: Оновити товар
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateItemDto'
+      responses:
+        '200':
+          description: Товар оновлено
+        '404':
+          description: Товар не знайдено
+
+    delete:
+      summary: Видалити товар
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Товар успішно видалено
+        '404':
+          description: Товар не знайдено
+
+components:
+  schemas:
+    ItemDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        discount:
+          type: number
+        finalPrice:
+          type: number
+    CreateItemDto:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        discount:
+          type: number
+    UpdateItemDto:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        discount:
+          type: number
