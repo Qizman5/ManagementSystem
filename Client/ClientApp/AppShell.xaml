@@ -4,34 +4,31 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:ClientApp.Views"
+    xmlns:adminViews="clr-namespace:ClientApp.Views.Admin"
     Title="WMS Mobile"
     FlyoutBehavior="Flyout">
 
-    <!-- 1. Вхід / Авторизація (Стартова сторінка) -->
-    <FlyoutItem Title="Авторизація">
-        <ShellContent
-            Title="Авторизація"
-            ContentTemplate="{DataTemplate views:LoginPage}"
-            Route="LoginPage" />
+    <!-- 1. Вхід / Авторизація -->
+    <FlyoutItem Title="🔑 Авторизація" Route="LoginPage">
+        <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
     </FlyoutItem>
 
-    <!-- 2. Список товарів (Захищена сторінка) -->
-    <FlyoutItem Title="Список товарів">
-        <ShellContent
-            Title="Список товарів"
-            ContentTemplate="{DataTemplate views:ItemsPage}"
-            Route="ItemsPage" />
+    <!-- 2. Список товарів -->
+    <FlyoutItem Title="📦 Список товарів" Route="ItemsPage">
+        <ShellContent ContentTemplate="{DataTemplate views:ItemsPage}" />
     </FlyoutItem>
 
-    <!-- 3. Створення операції (Захищена сторінка) -->
-    <FlyoutItem Title="Створити операцію">
-        <ShellContent
-            Title="Створити операцію"
-            ContentTemplate="{DataTemplate views:CreateOperationPage}"
-            Route="CreateOperationPage" />
+    <!-- 3. Створення операції -->
+    <FlyoutItem Title="➕ Створити операцію" Route="CreateOperationPage">
+        <ShellContent ContentTemplate="{DataTemplate views:CreateOperationPage}" />
     </FlyoutItem>
 
-    <!-- Кнопка виходу внизу бічного меню -->
+    <!-- 4. Адмін-панель (Прихована за замовчуванням для всіх) -->
+    <FlyoutItem x:Name="AdminFlyoutItem" Title="🛡️ Адмін-панель" Route="AdminPage" IsVisible="False">
+        <ShellContent ContentTemplate="{DataTemplate adminViews:AdminPage}" />
+    </FlyoutItem>
+
+    <!-- Кнопка виходу з акаунту внизу меню -->
     <MenuItem Text="🚪 Вийти з акаунту" Clicked="OnLogoutClicked" />
 
 </Shell>

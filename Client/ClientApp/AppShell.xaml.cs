@@ -8,8 +8,6 @@ namespace ClientApp
 {
     public partial class AppShell : Shell
     {
-        private FlyoutItem? _adminFlyoutItem;
-
         public AppShell()
         {
             InitializeComponent();
@@ -21,19 +19,19 @@ namespace ClientApp
             Routing.RegisterRoute(nameof(RegisterPage), typeof(RegisterPage));
         }
 
-        // Безпечний вихід з акаунту
+        // Обробник кнопка "Вийти з акаунту"
         public async void OnLogoutClicked(object sender, EventArgs e)
         {
             bool confirm = await DisplayAlert("Підтвердження", "Ви дійсно бажаєте вийти з акаунту?", "Так", "Ні");
             
             if (confirm)
             {
-                // 1. Очищаємо сесію
+                // 1. Очищаємо дані сесії
                 App.IsAuthenticated = false;
                 SecureStorage.Default.Remove("jwt_token");
                 SecureStorage.Default.Remove("user_email");
 
-                // 2. Скидаємо права адміна
+                // 2. Ховаємо адмін-панель для наступного входу
                 SetAdminAccess(false);
 
                 // 3. Закриваємо бокове меню
@@ -44,36 +42,12 @@ namespace ClientApp
             }
         }
 
+        // Вмикає або ховає пункт меню залежно від того, чи це адмін
         public void SetAdminAccess(bool isAdmin)
         {
-            if (isAdmin)
+            if (AdminFlyoutItem != null)
             {
-                if (_adminFlyoutItem == null)
-                {
-                    _adminFlyoutItem = new FlyoutItem
-                    {
-                        Title = "🛡️ Адмін-панель",
-                        Route = nameof(AdminPage),
-                        Items =
-                        {
-                            new ShellContent
-                            {
-                                ContentTemplate = new DataTemplate(typeof(AdminPage)),
-                                Route = nameof(AdminPage)
-                            }
-                        }
-                    };
-
-                    Items.Add(_adminFlyoutItem);
-                }
-            }
-            else
-            {
-                if (_adminFlyoutItem != null && Items.Contains(_adminFlyoutItem))
-                {
-                    Items.Remove(_adminFlyoutItem);
-                    _adminFlyoutItem = null;
-                }
+                AdminFlyoutItem.IsVisible = isAdmin;
             }
         }
     }
