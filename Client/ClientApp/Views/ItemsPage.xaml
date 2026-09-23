@@ -6,15 +6,9 @@
              Title="Список товарів"
              BackgroundColor="#F4F5F9">
 
-    <!-- Кнопки в верхньому меню (Адмінка показується тільки для адміна) -->
+    <!-- Кнопка Вийти у верхньому правому кутку (Кнопка Адмінки додається автоматично через C# для адміна) -->
     <ContentPage.ToolbarItems>
-        <ToolbarItem x:Name="AdminToolbarItem" 
-                     Text="🛡️ Адмінка" 
-                     Clicked="OnAdminClicked" 
-                     Priority="0" />
-        <ToolbarItem Text="🚪 Вийти" 
-                     Clicked="OnLogoutClicked" 
-                     Priority="1" />
+        <ToolbarItem Text="🚪 Вийти" Clicked="OnLogoutClicked" Priority="1" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="16" RowSpacing="12">
