@@ -99,7 +99,7 @@ builder.Services.AddAuthentication(options =>
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
     options.Cookie.Name = "WarehouseAuthCookie";
-    options.LoginPath = "/Account/Register"; // Редірект незаавторизованих на Реєстрацію
+    options.LoginPath = "/Account/Register";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/Register";
 
@@ -163,7 +163,7 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.EnsureCreated();
 }
 
-// 11. Активація Swagger UI з використанням кастомного index.html
+// 11. Активація Swagger UI
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -172,13 +172,6 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse API V1");
         c.RoutePrefix = "swagger"; // Шлях http://localhost:5024/swagger
         c.EnablePersistAuthorization();
-        
-        // Перевіряємо та підключаємо кастомний HTML за REST-стандартами
-        var swaggerHtmlPath = Path.Combine(app.Environment.WebRootPath, "swagger", "index.html");
-        if (File.Exists(swaggerHtmlPath))
-        {
-            c.IndexStream = () => File.OpenRead(swaggerHtmlPath);
-        }
     });
 }
 
@@ -198,13 +191,13 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 12. Перенаправлення з /api на /Admin/Index (усуває 404 помилку)
+// 12. Перенаправлення з /api на /Admin/Index
 app.MapGet("/api", context => {
     context.Response.Redirect("/Admin/Index");
     return Task.CompletedTask;
 });
 
-// 13. Маршрутизація контролерів (за замовчуванням /Admin/Index)
+// 13. Маршрутизація контролерів
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Admin}/{action=Index}/{id?}");
