@@ -8,7 +8,7 @@
     Title="WMS Mobile"
     FlyoutBehavior="Flyout">
 
-    <!-- 1. Вхід / Авторизація -->
+    <!-- 1. Екран авторизації -->
     <FlyoutItem Title="🔑 Авторизація" Route="LoginPage">
         <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
     </FlyoutItem>
@@ -23,12 +23,12 @@
         <ShellContent ContentTemplate="{DataTemplate views:CreateOperationPage}" />
     </FlyoutItem>
 
-    <!-- 4. Адмін-панель (Прихована за замовчуванням для всіх, активується для arotar2005@gmail.com) -->
+    <!-- 4. Адмін-панель (Прихована за замовчуванням, але доступна для навігації) -->
     <FlyoutItem x:Name="AdminFlyoutItem" Title="🛡️ Адмін-панель" Route="AdminPage" IsVisible="False">
         <ShellContent ContentTemplate="{DataTemplate adminViews:AdminPage}" />
     </FlyoutItem>
 
-    <!-- Кнопка виходу з акаунту внизу меню -->
+    <!-- Кнопка виходу внизу бічного меню -->
     <MenuItem Text="🚪 Вийти з акаунту" Clicked="OnLogoutClicked" />
 
 </Shell>

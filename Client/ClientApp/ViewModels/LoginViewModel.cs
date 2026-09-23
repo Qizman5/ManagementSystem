@@ -50,23 +50,20 @@ namespace ClientApp.ViewModels
             {
                 IsBusy = true;
 
-                // Перевіряємо, чи це обліковий запис адміністратора
+                // Перевірка на адміністратора
                 bool isAdmin = cleanUsername.Equals("arotar2005@gmail.com", StringComparison.OrdinalIgnoreCase);
 
-                // 1. Спроба авторизації через backend API
+                // Спроба входу через API
                 bool isSuccess = await _apiService.LoginAsync(cleanUsername, cleanPassword);
 
-                // Якщо сервер повернув true АБО це логін адміна — пропускаємо в систему
                 if (isSuccess || isAdmin)
                 {
-                    // 2. Встановлюємо стан авторизації
                     App.IsAuthenticated = true;
 
-                    // 3. Зберігаємо токен та email користувача у SecureStorage
-                    await SecureStorage.Default.SetAsync("jwt_token", "user_authenticated_session_token");
+                    await SecureStorage.Default.SetAsync("jwt_token", "admin_session_token");
                     await SecureStorage.Default.SetAsync("user_email", cleanUsername);
 
-                    // 4. Активуємо або ховаємо адмін-панель у Flyout-меню
+                    // 1. Спочатку робимо панель видимою у меню
                     if (Shell.Current is AppShell appShell)
                     {
                         appShell.SetAdminAccess(isAdmin);
@@ -74,15 +71,13 @@ namespace ClientApp.ViewModels
 
                     await Task.Delay(100);
 
-                    // 5. Перенаправлення залежно від ролі:
+                    // 2. Перенаправляємо: адміна — в адмінку, інших — до товарів
                     if (isAdmin)
                     {
-                        // Адміна ведемо одразу в Адмін-панель
                         await Shell.Current.GoToAsync("//AdminPage");
                     }
                     else
                     {
-                        // Звичайного користувача — у список товарів
                         await Shell.Current.GoToAsync("//ItemsPage");
                     }
                 }
@@ -95,7 +90,7 @@ namespace ClientApp.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"[LoginViewModel Exception]: {ex.Message}");
                 
-                // Резервний автономний вхід для адміна у випадку відсутності зв'язку з сервером
+                // Автономний резервний вхід для адміна
                 if (cleanUsername.Equals("arotar2005@gmail.com", StringComparison.OrdinalIgnoreCase))
                 {
                     App.IsAuthenticated = true;
