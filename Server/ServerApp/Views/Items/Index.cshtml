@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<ServerApp.Models.Item>
 @{
-    ViewData["Title"] = "Складський Облік";
-    Layout = null; // Автономний сучасний дизайн
+    ViewData["Title"] = "Панель Управління складом";
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -9,186 +9,302 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Панель Управління Складом</title>
+    <title>AdminConsole - Панель Управління</title>
     <!-- Bootstrap 5 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+
     <style>
+        :root {
+            --bg-main: #0b0f19;
+            --card-bg: #131b2e;
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-blue: #3b82f6;
+            --text-muted: #64748b;
+        }
+
         body {
-            background: #0f172a;
-            color: #f8fafc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-main);
+            color: #f1f5f9;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
+
+        /* Навігаційна панель */
         .navbar-custom {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(11, 15, 25, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--card-border);
         }
+
+        /* Головна сітка (Dashboard Grid) */
+        .dashboard-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(12, 1fr);
+            width: 100%;
+        }
+
+        /* Картки панелі */
         .glass-card {
-            background: #1e293b;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
-        .table-dark-custom {
+
+        .card-header-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        /* Стилі для таблиці */
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table-custom {
             --bs-table-bg: transparent;
             --bs-table-color: #cbd5e1;
-            --bs-table-hover-bg: rgba(255, 255, 255, 0.03);
-            border-color: rgba(255, 255, 255, 0.08);
+            margin-bottom: 0;
+            border-color: var(--card-border);
         }
-        .badge-quantity {
-            background: rgba(59, 130, 246, 0.15);
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.3);
+
+        .table-custom th {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 1rem;
         }
-        .badge-discount {
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+
+        .table-custom td {
+            padding: 0.85rem 1rem;
+            vertical-align: middle;
+            background-color: transparent !important;
+            color: #f1f5f9;
         }
-        .price-old {
-            text-decoration: line-through;
-            color: #64748b;
-            font-size: 0.9em;
+
+        /* Порожній стан (Empty State) */
+        .empty-state-row td {
+            background-color: transparent !important;
+            color: var(--text-muted) !important;
         }
-        .price-final {
-            color: #34d399;
-            font-weight: 700;
-        }
+
+        /* Кнопки */
         .btn-neon {
-            background: #3b82f6;
-            color: #ffffff;
+            background-color: var(--accent-blue);
+            color: #fff;
             border: none;
-            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
             transition: all 0.2s ease;
         }
+
         .btn-neon:hover {
-            background: #2563eb;
-            color: #ffffff;
-            transform: translateY(-1px);
+            background-color: #2563eb;
+            color: #fff;
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .badge-count {
+            background: rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+        }
+    </style>
+
+    <!-- Окремий блок для медіа-запитів без конфліктів Razor -->
+    <style type="text/css">
+        @@media (min-width: 1200px) {
+            .col-module-1 { grid-column: span 3; }
+            .col-module-2 { grid-column: span 3; }
+            .col-module-main { grid-column: span 6; }
+        }
+
+        @@media (min-width: 992px) and (max-width: 1199.98px) {
+            .col-module-1 { grid-column: span 6; }
+            .col-module-2 { grid-column: span 6; }
+            .col-module-main { grid-column: span 12; }
+        }
+
+        @@media (min-width: 768px) and (max-width: 991.98px) {
+            .col-module-1 { grid-column: span 12; }
+            .col-module-2 { grid-column: span 12; }
+            .col-module-main { grid-column: span 12; }
+        }
+
+        @@media (max-width: 767.98px) {
+            .dashboard-grid {
+                gap: 1rem;
+            }
+            .col-module-1, .col-module-2, .col-module-main {
+                grid-column: span 12;
+            }
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 1rem;
+            }
+            .btn-add-product {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Верхня навігаційна панель -->
-    <nav class="navbar navbar-dark navbar-custom sticky-top py-3 mb-4">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold fs-4" href="#">
-                <i class="bi bi-box-seam-fill text-primary"></i>
-                <span>Warehouse<span class="text-primary">Pro</span></span>
+    <!-- Навігація -->
+    <nav class="navbar navbar-dark navbar-custom px-3 py-2 mb-4">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-white fs-5" href="#">
+                <i class="bi bi-shield-check text-primary"></i>
+                <span>Admin <span class="text-secondary fw-normal">Console</span></span>
             </a>
             <div class="d-flex align-items-center gap-3">
-                <span class="text-muted small d-none d-sm-inline">
-                    <i class="bi bi-person-circle me-1"></i> @User.Identity?.Name
-                </span>
-                <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
-                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold">
-                        <i class="bi bi-box-arrow-right me-1"></i> Вийти
-                    </button>
-                </form>
+                <a href="/Admin/CreateProduct" class="btn btn-neon btn-sm px-3 py-1.5 rounded-2 d-inline-flex align-items-center gap-1 btn-add-product">
+                    <i class="bi bi-plus"></i> Додати товар
+                </a>
             </div>
         </div>
     </nav>
 
-    <div class="container mb-5">
-        <!-- Шапка сторінки та дії -->
-        <div class="glass-card p-4 mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <!-- Основна область -->
+    <main class="container-fluid px-3 px-md-4 flex-grow-1">
+        
+        <!-- Заголовок розділу -->
+        <div class="header-actions d-flex justify-content-between align-items-start mb-4">
             <div>
-                <h3 class="fw-bold mb-1"><i class="bi bi-boxes text-primary me-2"></i>Управління Товарами</h3>
-                <p class="text-muted small mb-0">Перегляд, редагування цін, знижок та кількості товарів на складі</p>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="/Admin/CreateProduct" class="btn btn-neon fw-semibold px-4 py-2 rounded-3">
-                    <i class="bi bi-plus-lg me-1"></i> Додати товар
-                </a>
+                <h2 class="fw-bold fs-4 mb-1">Система управління складом</h2>
+                <p class="text-secondary small mb-0">Моніторинг сервісів, REST API та керування товарним складом</p>
             </div>
         </div>
 
-        <!-- Таблиця товарів -->
-        <div class="glass-card overflow-hidden">
-            <div class="table-responsive">
-                <table class="table table-dark-custom align-middle mb-0">
-                    <thead>
-                        <tr class="text-uppercase small fw-bold text-muted border-bottom border-secondary border-opacity-25">
-                            <th class="ps-4 py-3">ID</th>
-                            <th class="py-3">Назва товару</th>
-                            <th class="py-3">Кількість</th>
-                            <th class="py-3">Базова ціна</th>
-                            <th class="py-3">Знижка</th>
-                            <th class="py-3">Кінцева ціна</th>
-                            <th class="text-end pe-4 py-3">Дії</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model != null && Model.Any())
-                        {
-                            @foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td class="ps-4 fw-semibold text-muted">#@item.Id</td>
-                                    <td>
-                                        <span class="fw-bold text-white fs-6">@item.Name</span>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-quantity rounded-pill px-3 py-2 fw-semibold">
-                                            <i class="bi bi-layers me-1"></i>@item.Quantity шт.
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @if (item.Discount > 0)
-                                        {
-                                            <span class="price-old">@item.Price.ToString("N2") ₴</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-slate-300">@item.Price.ToString("N2") ₴</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        @if (item.Discount > 0)
-                                        {
-                                            <span class="badge badge-discount rounded-pill px-2.5 py-1.5 fw-bold">
-                                                -@item.Discount%
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted small">0%</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        <span class="price-final fs-6">
-                                            @item.FinalPrice.ToString("N2") ₴
-                                        </span>
-                                    </td>
-                                    <td class="text-end pe-4">
-                                        <a href="/Admin/Edit/@item.Id" class="btn btn-sm btn-outline-warning rounded-2 me-1 px-3">
-                                            <i class="bi bi-pencil me-1"></i>Редагувати
-                                        </a>
-                                        <a href="/Admin/Delete/@item.Id" class="btn btn-sm btn-outline-danger rounded-2 px-3">
-                                            <i class="bi bi-trash me-1"></i>Видалити
-                                        </a>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
-                                    Товари відсутні у базі даних
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+        <!-- Сітка модулів (Dashboard Grid) -->
+        <div class="dashboard-grid">
+
+            <!-- Модуль ServerApp -->
+            <div class="col-module-1">
+                <div class="glass-card">
+                    <div class="card-header-custom">
+                        <span class="text-secondary small">Модуль ServerApp</span>
+                        <i class="bi bi-server text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1">ServerApp</h5>
+                    <p class="text-secondary small">Проєкт скомпільовано: Core</p>
+                </div>
             </div>
+
+            <!-- Модуль ClientApp -->
+            <div class="col-module-2">
+                <div class="glass-card">
+                    <div class="card-header-custom">
+                        <span class="text-secondary small">Модуль ClientApp</span>
+                        <i class="bi bi-display text-info"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1">ClientApp</h5>
+                    <p class="text-secondary small">Frontend / REST API</p>
+                </div>
+            </div>
+
+            <!-- Головний модуль: БД та Товари -->
+            <div class="col-module-main">
+                <div class="glass-card gap-4">
+                    
+                    <!-- Блок адміністрування БД -->
+                    <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border);">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-database text-primary"></i>
+                            <h6 class="fw-bold mb-0">Адміністрування БД</h6>
+                        </div>
+                        <p class="text-secondary small mb-3">Швидкий доступ до баз даних, списку користувачів та операційних логів.</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="#" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="bi bi-people me-1"></i> Користувачі</a>
+                            <a href="#" class="btn btn-sm btn-outline-info rounded-pill px-3"><i class="bi bi-journal-text me-1"></i> Операції</a>
+                        </div>
+                    </div>
+
+                    <!-- Таблиця товарів -->
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                                <i class="bi bi-box-seam text-primary"></i> Управління Товарами
+                            </h6>
+                            <span class="badge badge-count">Всього товарів: @(Model?.Count() ?? 0)</span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-custom align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Назва товару</th>
+                                        <th>Кількість</th>
+                                        <th>Базова ціна</th>
+                                        <th>Знижка</th>
+                                        <th>Кінцева ціна</th>
+                                        <th class="text-end">Дії</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model != null && Model.Any())
+                                    {
+                                        @foreach (var item in Model)
+                                        {
+                                            <tr>
+                                                <td class="text-secondary">#@item.Id</td>
+                                                <td class="fw-semibold">@item.Name</td>
+                                                <td>@item.Quantity шт.</td>
+                                                <td>@item.Price.ToString("N2") ₴</td>
+                                                <td>
+                                                    @if (item.Discount > 0)
+                                                    {
+                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">-@item.Discount%</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-secondary">0%</span>
+                                                    }
+                                                </td>
+                                                <td class="text-success fw-bold">@item.FinalPrice.ToString("N2") ₴</td>
+                                                <td class="text-end">
+                                                    <a href="/Admin/Edit/@item.Id" class="btn btn-sm btn-outline-warning me-1"><i class="bi bi-pencil"></i></a>
+                                                    <a href="/Admin/Delete/@item.Id" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr class="empty-state-row">
+                                            <td colspan="7" class="text-center py-5">
+                                                <i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>
+                                                <span>Товари відсутні у базі даних</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
-    </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

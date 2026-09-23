@@ -163,14 +163,22 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.EnsureCreated();
 }
 
-// 11. Активація Swagger UI
+// 11. Активація Swagger UI з використанням кастомного index.html
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse API V1");
+        c.RoutePrefix = "swagger"; // Шлях http://localhost:5024/swagger
         c.EnablePersistAuthorization();
+        
+        // Перевіряємо та підключаємо кастомний HTML за REST-стандартами
+        var swaggerHtmlPath = Path.Combine(app.Environment.WebRootPath, "swagger", "index.html");
+        if (File.Exists(swaggerHtmlPath))
+        {
+            c.IndexStream = () => File.OpenRead(swaggerHtmlPath);
+        }
     });
 }
 
@@ -203,5 +211,5 @@ app.MapControllerRoute(
 
 app.MapControllers();
 
-// 14. Запуск додатка (Завжди в самому кінці)
+// 14. Запуск додатка
 app.Run();
