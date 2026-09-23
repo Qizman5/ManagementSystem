@@ -1,6 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ServerApp.DTOs;
 using ServerApp.Models;
 
 namespace ServerApp.Controllers.Api
@@ -8,6 +8,7 @@ namespace ServerApp.Controllers.Api
     [ApiController]
     [Route("api/v1/items")]
     [Produces("application/json")]
+    [Authorize(Policy = "BearerOrCookie")]
     public class ItemsApiController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -21,34 +22,24 @@ namespace ServerApp.Controllers.Api
         /// Отримати список усіх товарів (з підтримкою пагінації)
         /// </summary>
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<ItemDto>))]
-        public async Task<ActionResult<IEnumerable<ItemDto>>> GetItems([FromQuery] int limit = 25, [FromQuery] int offset = 0)
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Item>))]
+        public async Task<ActionResult<IEnumerable<Item>>> GetItems([FromQuery] int limit = 25, [FromQuery] int offset = 0)
         {
             if (limit > 100) limit = 100;
 
-            var items = await _context.Items
+            return await _context.Items
                 .Skip(offset)
                 .Take(limit)
-                .Select(item => new ItemDto
-                {
-                    Id = item.Id,
-                    Name = item.Name,
-                    Quantity = item.Quantity,
-                    Price = item.Price,
-                    Discount = item.Discount
-                })
                 .ToListAsync();
-
-            return Ok(items);
         }
 
         /// <summary>
         /// Отримати конкретний товар за його ID
         /// </summary>
         [HttpGet("{id:int}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ItemDto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Item))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ItemDto>> GetItemById(int id)
+        public async Task<ActionResult<Item>> GetItemById(int id)
         {
             var item = await _context.Items.FindAsync(id);
 
@@ -57,14 +48,7 @@ namespace ServerApp.Controllers.Api
                 return NotFound(new { message = $"Товар з ID {id} не знайдено." });
             }
 
-            return Ok(new ItemDto
-            {
-                Id = item.Id,
-                Name = item.Name,
-                Quantity = item.Quantity,
-                Price = item.Price,
-                Discount = item.Discount
-            });
+            return Ok(item);
         }
 
         /// <summary>
@@ -72,33 +56,16 @@ namespace ServerApp.Controllers.Api
         /// </summary>
         [HttpPost]
         [Consumes("application/json")]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ItemDto))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Item))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<ItemDto>> CreateItem([FromBody] CreateItemDto dto)
+        public async Task<ActionResult<Item>> CreateItem([FromBody] Item item)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var item = new Item
-            {
-                Name = dto.Name,
-                Quantity = dto.Quantity,
-                Price = dto.Price,
-                Discount = dto.Discount
-            };
 
             _context.Items.Add(item);
             await _context.SaveChangesAsync();
 
-            var resultDto = new ItemDto
-            {
-                Id = item.Id,
-                Name = item.Name,
-                Quantity = item.Quantity,
-                Price = item.Price,
-                Discount = item.Discount
-            };
-
-            return CreatedAtAction(nameof(GetItemById), new { id = item.Id }, resultDto);
+            return CreatedAtAction(nameof(GetItemById), new { id = item.Id }, item);
         }
 
         /// <summary>
@@ -106,29 +73,32 @@ namespace ServerApp.Controllers.Api
         /// </summary>
         [HttpPut("{id:int}")]
         [Consumes("application/json")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ItemDto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Item))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ItemDto>> UpdateItem(int id, [FromBody] UpdateItemDto dto)
+        public async Task<ActionResult<Item>> UpdateItem(int id, [FromBody] Item item)
         {
-            var item = await _context.Items.FindAsync(id);
-            if (item == null) return NotFound(new { message = $"Товар з ID {id} не знайдено." });
-
-            item.Name = dto.Name;
-            item.Quantity = dto.Quantity;
-            item.Price = dto.Price;
-            item.Discount = dto.Discount;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new ItemDto
+            if (id != item.Id)
             {
-                Id = item.Id,
-                Name = item.Name,
-                Quantity = item.Quantity,
-                Price = item.Price,
-                Discount = item.Discount
-            });
+                return BadRequest(new { message = "ID у шляху та у тілі запиту не збігаються." });
+            }
+
+            _context.Entry(item).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Items.Any(e => e.Id == id))
+                {
+                    return NotFound(new { message = $"Товар з ID {id} не знайдено." });
+                }
+                throw;
+            }
+
+            return Ok(item);
         }
 
         /// <summary>

@@ -5,8 +5,10 @@ using ServerApp.Models;
 
 namespace ServerApp.Controllers
 {
-    [Authorize] // Потрібна авторизація для будь-якої дії в контролері
-    public class ItemsController : Controller
+    [Route("api/v1/items")]
+    [ApiController]
+    [Authorize(Policy = "BearerOrCookie")]
+    public class ItemsController : ControllerBase
     {
         private readonly AppDbContext _context;
 
@@ -15,126 +17,84 @@ namespace ServerApp.Controllers
             _context = context;
         }
 
-        // GET: Items
-        public async Task<IActionResult> Index()
+        // GET: api/v1/items
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Item>>> GetItems([FromQuery] int limit = 25, [FromQuery] int offset = 0)
         {
-            // AsNoTracking пришвидшує читання даних, оскільки EF не відстежує зміни
-            var items = await _context.Items
-                .AsNoTracking()
+            return await _context.Items
+                .Skip(offset)
+                .Take(limit)
                 .ToListAsync();
-
-            return View(items);
         }
 
-        // GET: Items/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var item = await _context.Items
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (item == null) return NotFound();
-
-            return View(item);
-        }
-
-        // GET: Items/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Items/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Quantity,Price,Description")] Item item)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(item);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(item);
-        }
-
-        // GET: Items/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var item = await _context.Items.FindAsync(id);
-            if (item == null) return NotFound();
-
-            return View(item);
-        }
-
-        // POST: Items/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Quantity,Price,Description")] Item item)
-        {
-            if (id != item.Id) return NotFound();
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(item);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ItemExists(item.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(item);
-        }
-
-        // GET: Items/Delete/5
-        [Authorize(Roles = "Admin,Manager")] // Обмеження прав: лише для Admin та Manager
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var item = await _context.Items
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (item == null) return NotFound();
-
-            return View(item);
-        }
-
-        // POST: Items/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        // GET: api/v1/items/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Item>> GetItem(int id)
         {
             var item = await _context.Items.FindAsync(id);
-            if (item != null)
+            if (item == null)
             {
-                _context.Items.Remove(item);
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-
-            return RedirectToAction(nameof(Index));
+            return item;
         }
 
-        private bool ItemExists(int id)
+        // POST: api/v1/items
+        [HttpPost]
+        public async Task<ActionResult<Item>> CreateItem([FromBody] Item item)
         {
-            return _context.Items.Any(e => e.Id == id);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            _context.Items.Add(item);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetItem), new { id = item.Id }, item);
+        }
+
+        // PUT: api/v1/items/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateItem(int id, [FromBody] Item item)
+        {
+            if (id != item.Id)
+            {
+                return BadRequest("ID у шляху та у тілі запиту не збігаються.");
+            }
+
+            _context.Entry(item).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Items.Any(e => e.Id == id))
+                {
+                    return NotFound();
+                }
+                throw;
+            }
+
+            return Ok(item);
+        }
+
+        // DELETE: api/v1/items/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteItem(int id)
+        {
+            var item = await _context.Items.FindAsync(id);
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            _context.Items.Remove(item);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }

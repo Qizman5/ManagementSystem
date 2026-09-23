@@ -8,21 +8,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ServerApp.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Додаємо підтримку MVC (Контролери + Razor Views)
 builder.Services.AddControllersWithViews();
 
-// 2. Додаємо Swagger з підтримкою JWT-авторизації та фільтрацією Schemas
+// 2. Додаємо Swagger з підтримкою JWT-авторизації
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Warehouse API", Version = "v1" });
-
-    // Безпечний фільтр для видалення непотрібних схем із Swagger JSON
-    options.DocumentFilter<HideSchemasFilter>();
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -55,7 +51,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// 4. Конфігурація Rate Limiting (Глобальний + StrictPolicy)
+// 4. Конфігурація Rate Limiting
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -176,6 +172,9 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse API V1");
         c.RoutePrefix = "swagger";
         c.EnablePersistAuthorization();
+        
+        // Візуально приховує блок Schemas в інтерфейсі без зламу посилань
+        c.DefaultModelsExpandDepth(-1); 
     });
 }
 
@@ -210,16 +209,3 @@ app.MapControllers();
 
 // 14. Запуск додатка
 app.Run();
-
-// Клас-фільтр для приховування непотрібних схем у Swagger
-public class HideSchemasFilter : IDocumentFilter
-{
-    public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
-    {
-        var ignoredTypes = new[] { "CreateItemDto", "ItemDto", "LoginDto", "ProblemDetails", "UpdateItemDto", "User", "UserAction" };
-        foreach (var type in ignoredTypes)
-        {
-            swaggerDoc.Components.Schemas.Remove(type);
-        }
-    }
-}
