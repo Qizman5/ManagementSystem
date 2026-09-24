@@ -9,26 +9,26 @@
     FlyoutBehavior="Flyout">
 
     <!-- 1. Вхід / Авторизація -->
-    <FlyoutItem x:Name="LoginFlyoutItem" Title="🔑 Авторизація" Route="LoginPage">
+    <FlyoutItem Title="🔑 Авторизація" Route="LoginPage">
         <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
     </FlyoutItem>
 
     <!-- 2. Список товарів -->
-    <FlyoutItem x:Name="ItemsFlyoutItem" Title="📦 Список товарів" Route="ItemsPage">
+    <FlyoutItem Title="📦 Список товарів" Route="ItemsPage">
         <ShellContent ContentTemplate="{DataTemplate views:ItemsPage}" />
     </FlyoutItem>
 
     <!-- 3. Створення операції -->
-    <FlyoutItem x:Name="CreateOpFlyoutItem" Title="➕ Створити операцію" Route="CreateOperationPage">
+    <FlyoutItem Title="➕ Створити операцію" Route="CreateOperationPage">
         <ShellContent ContentTemplate="{DataTemplate views:CreateOperationPage}" />
     </FlyoutItem>
 
-    <!-- 4. Адмін-панель (За замовчуванням прихована) -->
+    <!-- 4. Адмін-панель (Прихована за замовчуванням) -->
     <FlyoutItem x:Name="AdminFlyoutItem" Title="🛡️ Адмін-панель" Route="AdminPage" IsVisible="False">
         <ShellContent ContentTemplate="{DataTemplate adminViews:AdminPage}" />
     </FlyoutItem>
 
-    <!-- Кнопка виходу -->
+    <!-- Кнопка виходу внизу меню -->
     <MenuItem Text="🚪 Вийти з акаунту" Clicked="OnLogoutClicked" />
 
 </Shell>

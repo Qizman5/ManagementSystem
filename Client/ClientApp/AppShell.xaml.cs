@@ -9,8 +9,6 @@ namespace ClientApp
 {
     public partial class AppShell : Shell
     {
-        private FlyoutItem? _adminFlyoutItem;
-
         public AppShell()
         {
             InitializeComponent();
@@ -35,34 +33,9 @@ namespace ClientApp
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                if (isAdmin)
+                if (AdminFlyoutItem != null)
                 {
-                    if (_adminFlyoutItem == null)
-                    {
-                        _adminFlyoutItem = new FlyoutItem
-                        {
-                            Title = "🛡️ Адмін-панель",
-                            Route = nameof(AdminPage),
-                            Items =
-                            {
-                                new ShellContent
-                                {
-                                    ContentTemplate = new DataTemplate(typeof(AdminPage)),
-                                    Route = nameof(AdminPage)
-                                }
-                            }
-                        };
-
-                        Items.Add(_adminFlyoutItem);
-                    }
-                }
-                else
-                {
-                    if (_adminFlyoutItem != null && Items.Contains(_adminFlyoutItem))
-                    {
-                        Items.Remove(_adminFlyoutItem);
-                        _adminFlyoutItem = null;
-                    }
+                    AdminFlyoutItem.IsVisible = isAdmin;
                 }
             });
         }
