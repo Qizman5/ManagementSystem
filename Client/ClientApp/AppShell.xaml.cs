@@ -42,18 +42,17 @@ namespace ClientApp
                         _adminFlyoutItem = new FlyoutItem
                         {
                             Title = "🛡️ Адмін-панель",
-                            Route = "AdminPage",
+                            Route = nameof(AdminPage),
                             Items =
                             {
                                 new ShellContent
                                 {
                                     ContentTemplate = new DataTemplate(typeof(AdminPage)),
-                                    Route = "AdminPage"
+                                    Route = nameof(AdminPage)
                                 }
                             }
                         };
 
-                        // Вставляємо кнопку прямо в меню
                         Items.Add(_adminFlyoutItem);
                     }
                 }
