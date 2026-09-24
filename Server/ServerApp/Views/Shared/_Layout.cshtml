@@ -105,6 +105,68 @@
             background-color: #4020A8;
             color: #FFFFFF;
         }
+
+        /* --- АДАПТИВНІСТЬ ДЛЯ РІЗНИХ ПРИСТРОЇВ --- */
+
+        /* Великі ПК / Монітори (від 1200px і вище) */
+        @@media screen and (min-width: 1200px) {
+            .container, .container-fluid {
+                max-width: 1400px;
+            }
+        }
+
+        /* Ноутбуки та MacBook (від 992px до 1199px) */
+        @@media screen and (max-width: 1199px) {
+            .row {
+                flex-direction: column;
+            }
+            .col-md-4, .col-md-8 {
+                width: 100% !important;
+                margin-bottom: 20px;
+            }
+        }
+
+        /* Планшети та iPad (від 768px до 991px) */
+        @@media screen and (max-width: 991px) {
+            body {
+                padding: 10px;
+            }
+            .card {
+                margin-bottom: 15px;
+            }
+            h3.fw-bold {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Телефони та Android / iPhone (до 767px) */
+        @@media screen and (max-width: 767px) {
+            body {
+                font-size: 14px;
+            }
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            .table-responsive {
+                border: 0;
+            }
+            .btn {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+            .login-card, .card {
+                padding: 15px !important;
+                border-radius: 10px;
+            }
+        }
+
+        /* Спеціально для вузьких мобільних екранів в портретній орієнтації */
+        @@media screen and (max-width: 576px) {
+            .container {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+        }
     </style>
 </head>
 <body>

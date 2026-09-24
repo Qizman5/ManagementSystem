@@ -63,7 +63,7 @@ namespace ClientApp.ViewModels
                     await SecureStorage.Default.SetAsync("jwt_token", "admin_session_token");
                     await SecureStorage.Default.SetAsync("user_email", cleanUsername);
 
-                    // 1. Спочатку додаємо або ховаємо адмін-панель у меню
+                    // 1. Спочатку робимо панель видимою у меню
                     if (Shell.Current is AppShell appShell)
                     {
                         appShell.SetAdminAccess(isAdmin);

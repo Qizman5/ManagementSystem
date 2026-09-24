@@ -28,7 +28,7 @@
                 </Picker.ItemsSource>
             </Picker>
 
-            <!-- Ручне введення назви товару -->
+            <!-- Назва товару -->
             <Label Text="Назва товару:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
             <Entry x:Name="ItemNameEntry" 
                    Placeholder="Введіть назву товару" 
@@ -39,7 +39,6 @@
             <Entry x:Name="QuantityEntry" 
                    Placeholder="Введіть кількість" 
                    Keyboard="Numeric" 
-                   TextChanged="OnNumericEntryTextChanged"
                    BackgroundColor="White" />
 
             <!-- Примітка -->
