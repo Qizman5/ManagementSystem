@@ -1,52 +1,30 @@
 using System;
 using System.Linq;
+using ClientApp.Models;
+using ClientApp.Services;
 using Microsoft.Maui.Controls;
-using ClientApp.ViewModels;
 
 namespace ClientApp.Views
 {
     public partial class CreateOperationPage : ContentPage
     {
+        private readonly ApiService _apiService;
+
         public CreateOperationPage()
         {
             InitializeComponent();
-            BindingContext = new ActionViewModel();
+            _apiService = new ApiService();
         }
 
-        public CreateOperationPage(ActionViewModel viewModel)
-        {
-            InitializeComponent();
-            BindingContext = viewModel;
-        }
-
-        protected override async void OnAppearing()
-        {
-            base.OnAppearing();
-            
-            // Завантаження товарів при відкритті сторінки
-            if (BindingContext is ActionViewModel vm)
-            {
-                if (vm.Items == null || vm.Items.Count == 0)
-                {
-                    if (vm.LoadItemsCommand != null && vm.LoadItemsCommand.CanExecute(null))
-                    {
-                        await vm.LoadItemsCommand.ExecuteAsync(null);
-                    }
-                }
-            }
-        }
-
-        // Захист від введення від'ємних чисел, мінусів, знаків та провідних нулів
+        // Валідація введення кількості (тільки додатні цифри)
         private void OnNumericEntryTextChanged(object sender, TextChangedEventArgs e)
         {
             try
             {
                 if (sender is Entry entry && !string.IsNullOrEmpty(e.NewTextValue))
                 {
-                    // char.IsDigit залишає лише цифри (0-9), повністю видаляючи мінус, крапки та інші символи
                     string cleanText = new string(e.NewTextValue.Where(char.IsDigit).ToArray());
 
-                    // Видаляємо провідні нулі (наприклад, "05" -> "5")
                     if (long.TryParse(cleanText, out long parsedValue))
                     {
                         cleanText = parsedValue.ToString();
@@ -70,42 +48,59 @@ namespace ClientApp.Views
 
         private async void OnSaveOperationClicked(object sender, EventArgs e)
         {
+            var itemName = ItemNameEntry.Text?.Trim();
+
+            // 1. Перевірка: чи введено назву товару
+            if (string.IsNullOrWhiteSpace(itemName))
+            {
+                await DisplayAlert("Увага", "Будь ласка, введіть назву товару!", "OK");
+                return;
+            }
+
+            // 2. Перевірка: чи обрано тип операції
+            if (OperationTypePicker.SelectedIndex == -1)
+            {
+                await DisplayAlert("Увага", "Будь ласка, оберіть тип операції!", "OK");
+                return;
+            }
+
+            // 3. Перевірка: вказано додатну кількість
+            if (!int.TryParse(QuantityEntry.Text, out int quantity) || quantity <= 0)
+            {
+                await DisplayAlert("Увага", "Будь ласка, вкажіть кількість більше 0!", "OK");
+                return;
+            }
+
             try
             {
-                if (BindingContext is ActionViewModel vm)
+                // Визначення типу дії для сервера
+                string selectedType = OperationTypePicker.SelectedItem?.ToString() ?? "Income";
+                string actionType = selectedType.Contains("Витрата") ? "Expense" :
+                                    selectedType.Contains("Переміщення") ? "Transfer" : "Income";
+
+                // Формування DTO для відправки на API
+                var dto = new UserActionDto
                 {
-                    // Перевірка 1: Чи обрано товар
-                    if (vm.SelectedItem == null)
-                    {
-                        await DisplayAlert("Увага", "Будь ласка, оберіть товар зі списку!", "OK");
-                        return;
-                    }
+                    UserId = 3,
+                    Quantity = quantity,
+                    ActionType = actionType,
+                    Note = $"Товар: {itemName}. {NoteEntry.Text?.Trim()}".Trim()
+                };
 
-                    // Перевірка 2: Вказана кількість більше 0
-                    if (vm.Quantity <= 0)
-                    {
-                        await DisplayAlert("Увага", "Введіть кількість більше 0!", "OK");
-                        return;
-                    }
+                bool success = await _apiService.CreateActionAsync(dto);
 
-                    // Виконання збереження через ViewModel
-                    if (vm.CreateActionCommand != null)
-                    {
-                        await vm.CreateActionCommand.ExecuteAsync(null);
-                    }
-
+                if (success)
+                {
                     await DisplayAlert("Успіх", "Операцію успішно збережено!", "OK");
-
-                    // Повернення на сторінку товарів
-                    if (Shell.Current != null)
-                    {
-                        await Shell.Current.GoToAsync("//ItemsPage");
-                    }
+                    await Shell.Current.GoToAsync("//ItemsPage");
+                }
+                else
+                {
+                    await DisplayAlert("Помилка", "Не вдалося зберегти операцію на сервері", "OK");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Save Operation Error]: {ex.Message}");
                 await DisplayAlert("Помилка", $"Виникла помилка: {ex.Message}", "OK");
             }
         }

@@ -28,18 +28,18 @@
                 </Picker.ItemsSource>
             </Picker>
 
-            <!-- Назва товару (замінено з Entry на Picker) -->
+            <!-- Ручне введення назви товару -->
             <Label Text="Назва товару:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
-            <Picker x:Name="ItemPicker" 
-                    Title="Оберіть товар зі списку" 
-                    ItemDisplayBinding="{Binding Name}"
-                    BackgroundColor="White" />
+            <Entry x:Name="ItemNameEntry" 
+                   Placeholder="Введіть назву товару" 
+                   BackgroundColor="White" />
 
             <!-- Кількість -->
             <Label Text="Кількість:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
             <Entry x:Name="QuantityEntry" 
                    Placeholder="Введіть кількість" 
                    Keyboard="Numeric" 
+                   TextChanged="OnNumericEntryTextChanged"
                    BackgroundColor="White" />
 
             <!-- Примітка -->
