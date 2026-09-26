@@ -105,7 +105,7 @@
             transform: translateY(-1px);
         }
 
-        /* Адаптивність для мобільних пристроїв (екранування @@media) */
+        /* Адаптивність для мобільних пристроїв */
         @@media (max-width: 576px) {
             .header-title {
                 font-size: 1.25rem;
@@ -131,11 +131,12 @@
             <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-primary fs-5" href="/Admin/Index">
                 <i class="bi bi-shield-lock-fill"></i> Admin<span class="text-white">Console</span>
             </a>
-                </span>
-                <a href="/Admin/Logout" class="btn btn-outline-danger btn-sm rounded-2">
+            <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger btn-sm rounded-2">
                     <i class="bi bi-box-arrow-right"></i> <span class="d-none d-sm-inline">Вийти</span>
-                </a>
-            </div>
+                </button>
+            </form>
         </div>
     </nav>
 
@@ -149,7 +150,8 @@
                 <p class="text-muted small mb-0">Моніторинг сервісів, REST API та керування товарним складом</p>
             </div>
             <div class="d-flex align-items-center gap-2 action-btns">
-                <a href="/Admin/CreateProduct" class="btn btn-gradient fw-semibold rounded-3 px-3 py-2">
+                <!-- Правильне посилання на створення товару (виправляє помилку 404) -->
+                <a asp-controller="Items" asp-action="Create" class="btn btn-gradient fw-semibold rounded-3 px-3 py-2 text-decoration-none">
                     <i class="bi bi-plus-lg me-1"></i> Додати товар
                 </a>
                 <button onclick="location.reload();" class="btn btn-outline-secondary rounded-3 py-2 px-3">
@@ -160,7 +162,7 @@
 
         <!-- Сітка виджетів стану -->
         <div class="row g-3 mb-4">
-            <div class="col-12 col-sm-6 col-xl-3">
+            <div class="col-12 col-sm-6 col-xl-4">
                 <div class="stat-card p-3 p-md-4">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-muted small">Модуль ServerApp</span>
@@ -169,11 +171,11 @@
                         </div>
                     </div>
                     <div class="fw-bold text-white fs-6">ServerApp</div>
-                    <span class="text-muted extra-small">Проект скомпільовано: Core</span>
+                    <span class="text-muted small">Проект скомпільовано: Core</span>
                 </div>
             </div>
 
-            <div class="col-12 col-sm-6 col-xl-3">
+            <div class="col-12 col-sm-6 col-xl-4">
                 <div class="stat-card p-3 p-md-4">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-muted small">Модуль ClientApp</span>
@@ -182,35 +184,23 @@
                         </div>
                     </div>
                     <div class="fw-bold text-white fs-6">ClientApp</div>
-                    <span class="text-muted extra-small">Frontend / REST API</span>
+                    <span class="text-muted small">Frontend / REST API</span>
                 </div>
             </div>
 
-            <div class="col-12 col-sm-6 col-xl-3">
+            <div class="col-12 col-sm-12 col-xl-4">
                 <div class="stat-card p-3 p-md-4">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="text-muted small">База даних</span>
+                        <span class="text-muted small">Адміністрування БД</span>
                         <div class="bg-success bg-opacity-10 text-success rounded-3 p-2">
                             <i class="bi bi-server"></i>
                         </div>
                     </div>
-
-
-        <!-- Додаткова інформація (БД та Swagger) -->
-        <div class="row g-3 mb-4">
-            <div class="col-12 col-lg-6">
-                <div class="stat-card p-3 p-md-4">
-                    <div class="d-flex align-items-center gap-2 fw-semibold text-white mb-2">
-                        <i class="bi bi-database-gear text-primary"></i> Адміністрування БД
-                    </div>
-                    <p class="text-muted small mb-3">Швидкий доступ до баз даних, списку користувачів та операційних логів.</p>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="#" class="btn btn-outline-primary btn-sm rounded-pill"><i class="bi bi-people me-1"></i> Користувачі</a>
-                        <a href="#" class="btn btn-outline-info btn-sm rounded-pill"><i class="bi bi-journal-text me-1"></i> Операцій</a>
-                    </div>
+                    <div class="fw-bold text-white fs-6">База даних MySQL</div>
+                    <span class="text-muted small">Зв'язки: Users, Items, Actions</span>
                 </div>
             </div>
-            
+        </div>
 
         <!-- Таблиця товарів -->
         <div class="d-flex align-items-center justify-content-between mb-3">
@@ -254,10 +244,10 @@
                                 <td class="fw-bold text-success">@item.FinalPrice.ToString("N2") ₴</td>
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm">
-                                        <a href="/Admin/Edit/@item.Id" class="btn btn-outline-warning rounded-2 me-1" title="Редагувати">
+                                        <a href="/Items/Edit/@item.Id" class="btn btn-outline-warning rounded-2 me-1" title="Редагувати">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <a href="/Admin/Delete/@item.Id" class="btn btn-outline-danger rounded-2" title="Видалити">
+                                        <a href="/Items/Delete/@item.Id" class="btn btn-outline-danger rounded-2" title="Видалити">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                     </div>

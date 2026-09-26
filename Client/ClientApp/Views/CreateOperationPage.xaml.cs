@@ -16,7 +16,6 @@ namespace ClientApp.Views
             _apiService = new ApiService();
         }
 
-        // Валідація введення кількості (тільки додатні цифри)
         private void OnNumericEntryTextChanged(object sender, TextChangedEventArgs e)
         {
             try
@@ -50,21 +49,18 @@ namespace ClientApp.Views
         {
             var itemName = ItemNameEntry.Text?.Trim();
 
-            // 1. Перевірка: чи введено назву товару
             if (string.IsNullOrWhiteSpace(itemName))
             {
                 await DisplayAlert("Увага", "Будь ласка, введіть назву товару!", "OK");
                 return;
             }
 
-            // 2. Перевірка: чи обрано тип операції
             if (OperationTypePicker.SelectedIndex == -1)
             {
                 await DisplayAlert("Увага", "Будь ласка, оберіть тип операції!", "OK");
                 return;
             }
 
-            // 3. Перевірка: вказано додатну кількість
             if (!int.TryParse(QuantityEntry.Text, out int quantity) || quantity <= 0)
             {
                 await DisplayAlert("Увага", "Будь ласка, вкажіть кількість більше 0!", "OK");
@@ -73,18 +69,32 @@ namespace ClientApp.Views
 
             try
             {
-                // Визначення типу дії для сервера
+                // 1. Отримуємо товари для визначення реального ID
+                var items = await _apiService.GetItemsAsync();
+                
+                // Шукаємо за назвою або беремо перший товар з бази даних
+                var foundItem = items?.FirstOrDefault(i => i.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase)) 
+                                ?? items?.FirstOrDefault();
+
+                if (foundItem == null)
+                {
+                    await DisplayAlert("Помилка", "У базі даних немає жодного товару!", "OK");
+                    return;
+                }
+
+                // 2. Формуємо тип операції
                 string selectedType = OperationTypePicker.SelectedItem?.ToString() ?? "Income";
                 string actionType = selectedType.Contains("Витрата") ? "Expense" :
                                     selectedType.Contains("Переміщення") ? "Transfer" : "Income";
 
-                // Формування DTO для відправки на API
+                // 3. Відправляємо запит з валідним ItemId
                 var dto = new UserActionDto
                 {
                     UserId = 3,
+                    ItemId = foundItem.Id,
                     Quantity = quantity,
                     ActionType = actionType,
-                    Note = $"Товар: {itemName}. {NoteEntry.Text?.Trim()}".Trim()
+                    Note = $"[Товар: {itemName}] {NoteEntry.Text?.Trim()}".Trim()
                 };
 
                 bool success = await _apiService.CreateActionAsync(dto);
@@ -96,7 +106,7 @@ namespace ClientApp.Views
                 }
                 else
                 {
-                    await DisplayAlert("Помилка", "Не вдалося зберегти операцію на сервері", "OK");
+                    await DisplayAlert("Помилка сервера", $"Сервер відхилив операцію для товару (ID: {foundItem.Id}). Перевірте наявність товару на складі.", "OK");
                 }
             }
             catch (Exception ex)

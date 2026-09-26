@@ -79,7 +79,7 @@ namespace ServerApp.Controllers
                 return View(model);
             }
 
-            // Успішна авторизація
+            // Успішна авторизація звичайного користувача
             await AuthenticateUser(user.Username, user.Role ?? "Worker");
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -130,14 +130,18 @@ namespace ServerApp.Controllers
         }
 
         // --- ВИХІД (LOGOUT) ---
-        [HttpPost]
+        [HttpPost("Logout")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            // Повне очищення кукі сесії
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            
+            // Перенаправлення на сторінку входу з очищенням стану
             return RedirectToAction("Login", "Account");
         }
 
-        // Впоміжний метод аутентифікації (Cookie)
+        // Допоміжний метод аутентифікації (Cookie) із забороною постійного кешування сесії
         private async Task AuthenticateUser(string username, string role)
         {
             var claims = new List<Claim>
@@ -147,7 +151,16 @@ namespace ServerApp.Controllers
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
+
+            // Встановлюємо IsPersistent = false, щоб сесія не зберігалася в браузері після виходу
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = false,
+                AllowRefresh = true
+            };
+
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme); // Очищаємо попередні сесії
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
         }
     }
 }
