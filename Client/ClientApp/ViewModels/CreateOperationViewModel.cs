@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 using ClientApp.Services;
 using ClientApp.Models;
 
@@ -101,9 +102,12 @@ namespace ClientApp.ViewModels
                 IsBusy = true;
                 ErrorMessage = string.Empty;
 
+                // Отримуємо ID збереженого користувача або використовуємо 1 за замовчуванням
+                int currentUserId = Preferences.Get("user_id", 1);
+
                 var dto = new UserActionDto
                 {
-                    UserId = 3,
+                    UserId = currentUserId,
                     ItemId = ItemId,
                     Quantity = Quantity,
                     ActionType = ActionType,

@@ -22,17 +22,33 @@ namespace ServerApp.Controllers.API
         {
             if (dto == null) return BadRequest("Некоректні дані запиту.");
 
-            // 1. Пошук товару
+            // 1. Перевірка наявності користувача в БД (використовуємо _context.Users)
+            var userExists = await _context.Users.AnyAsync(u => u.Id == dto.UserId);
+            if (!userExists)
+            {
+                // Якщо переданого UserId немає, підставляємо першого наявного користувача з БД
+                var firstUser = await _context.Users.FirstOrDefaultAsync();
+                if (firstUser != null)
+                {
+                    dto.UserId = firstUser.Id;
+                }
+                else
+                {
+                    return BadRequest("У системі відсутні зареєстровані користувачі.");
+                }
+            }
+
+            // 2. Пошук товару
             var item = await _context.Items.FirstOrDefaultAsync(i => i.Id == dto.ItemId)
                        ?? await _context.Items.FirstOrDefaultAsync(i => i.Name.ToLower() == dto.ItemName.ToLower());
 
-            // 2. Перевірка: якщо товару немає, а виконується Витрата або Переміщення
+            // 3. Перевірка: якщо товару немає, а виконується Витрата або Переміщення
             if (item == null && dto.ActionType != "Income")
             {
                 return BadRequest($"Товар '{dto.ItemName}' не знайдено на складі. Спершу виконайте Прихід.");
             }
 
-            // 3. Створення нового товару (якщо це Прихід)
+            // 4. Створення нового товару (якщо це Прихід)
             if (item == null)
             {
                 item = new Item
@@ -48,7 +64,7 @@ namespace ServerApp.Controllers.API
             }
             else
             {
-                // 4. Оновлення кількості товару
+                // 5. Оновлення кількості товару
                 if (dto.ActionType == "Income")
                 {
                     item.Quantity += dto.Quantity;
@@ -63,7 +79,7 @@ namespace ServerApp.Controllers.API
                 }
             }
 
-            // 5. Логування дії
+            // 6. Фіксація дії
             var userAction = new UserAction
             {
                 UserId = dto.UserId,
