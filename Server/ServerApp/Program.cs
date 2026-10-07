@@ -163,10 +163,11 @@ var app = builder.Build();
 // 9. Проксі-заголовки
 app.UseForwardedHeaders();
 
-// 10. Ініціалізація бази даних
+// 10. Перестворення бази даних для застосування актуальної схеми
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.EnsureDeleted();
     dbContext.Database.EnsureCreated();
 }
 
@@ -182,7 +183,6 @@ if (app.Environment.IsDevelopment())
         c.EnablePersistAuthorization();
         c.DefaultModelsExpandDepth(-1);
 
-        // Впроваджуємо CSS-стилі прямо в інтерфейс Swagger, щоб приховати URL і бейджі v1/OAS3
         c.HeadContent = @"
             <style>
                 .swagger-ui .info .base-url,
