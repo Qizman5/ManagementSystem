@@ -1,10 +1,8 @@
 using System;
 using System.Linq;
+using Microsoft.Maui.Controls;
 using ClientApp.Models;
 using ClientApp.Services;
-using Microsoft.Maui.Controls;
-// Додаємо аліас, щоб усунути неоднозначність:
-using UserActionDto = ClientApp.Models.UserActionDto;
 
 namespace ClientApp.Views
 {
@@ -75,7 +73,6 @@ namespace ClientApp.Views
                 string actionType = selectedType.Contains("Витрата") ? "Expense" :
                                     selectedType.Contains("Переміщення") ? "Transfer" : "Income";
 
-                // Використовуємо явно вказану модель із ClientApp.Models
                 var dto = new UserActionDto
                 {
                     UserId = 3,
@@ -86,16 +83,16 @@ namespace ClientApp.Views
                     Note = NoteEntry.Text?.Trim() ?? string.Empty
                 };
 
-                bool success = await _apiService.CreateActionAsync(dto);
+                var (success, message) = await _apiService.CreateActionAsync(dto);
 
                 if (success)
                 {
-                    await DisplayAlert("Успіх", $"Товар '{itemName}' та операцію додано до бази даних!", "OK");
+                    await DisplayAlert("Успіх", message, "OK");
                     await Shell.Current.GoToAsync("//ItemsPage");
                 }
                 else
                 {
-                    await DisplayAlert("Помилка", "Сервер відхилив операцію. Перевірте введені дані.", "OK");
+                    await DisplayAlert("Помилка", message, "OK");
                 }
             }
             catch (Exception ex)

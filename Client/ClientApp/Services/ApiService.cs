@@ -92,20 +92,28 @@ namespace ClientApp.Services
         }
 
         /// <summary>
-        /// Створення складської операції (POST api/actions)
+        /// Створення складської операції (POST api/actions) з поверненням детального повідомлення
         /// </summary>
-        public async Task<bool> CreateActionAsync(UserActionDto dto)
+        public async Task<(bool Success, string Message)> CreateActionAsync(UserActionDto dto)
         {
             try
             {
                 await AddAuthHeaderAsync();
                 var response = await _httpClient.PostAsJsonAsync("api/actions", dto);
-                return response.IsSuccessStatusCode;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return (true, "Операцію успішно збережено!");
+                }
+
+                // Зчитуємо точний текст помилки від сервера
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                return (false, string.IsNullOrWhiteSpace(errorResponse) ? "Сервер відхилив операцію." : errorResponse);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ApiService] CreateAction Exception: {ex.Message}");
-                return false;
+                System.Diagnostics.Debug.WriteLine($"[ApiService Error]: {ex.Message}");
+                return (false, $"Помилка з'єднання: {ex.Message}");
             }
         }
 

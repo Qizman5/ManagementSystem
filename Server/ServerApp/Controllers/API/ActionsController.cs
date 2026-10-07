@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ServerApp.Data;
 using ServerApp.Models;
 
 namespace ServerApp.Controllers.API
@@ -11,9 +10,9 @@ namespace ServerApp.Controllers.API
     [Route("api/[controller]")]
     public class ActionsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public ActionsController(ApplicationDbContext context)
+        public ActionsController(AppDbContext context)
         {
             _context = context;
         }
@@ -21,50 +20,50 @@ namespace ServerApp.Controllers.API
         [HttpPost]
         public async Task<IActionResult> CreateAction([FromBody] CreateUserActionDto dto)
         {
-            if (dto == null) return BadRequest("Некоректні дані");
+            if (dto == null) return BadRequest("Некоректні дані запиту.");
 
-            // 1. Шукаємо товар за ID або за назвою
+            // 1. Пошук товару
             var item = await _context.Items.FirstOrDefaultAsync(i => i.Id == dto.ItemId)
                        ?? await _context.Items.FirstOrDefaultAsync(i => i.Name.ToLower() == dto.ItemName.ToLower());
 
-            // 2. Якщо товару немає — автоматично створюємо його в warehouse_db
+            // 2. Перевірка: якщо товару немає, а виконується Витрата або Переміщення
+            if (item == null && dto.ActionType != "Income")
+            {
+                return BadRequest($"Товар '{dto.ItemName}' не знайдено на складі. Спершу виконайте Прихід.");
+            }
+
+            // 3. Створення нового товару (якщо це Прихід)
             if (item == null)
             {
-                if (string.IsNullOrWhiteSpace(dto.ItemName))
-                {
-                    return BadRequest("Назву товару не вказано");
-                }
-
                 item = new Item
                 {
                     Name = dto.ItemName,
-                    Description = string.IsNullOrWhiteSpace(dto.Note) ? "Створено через операцію" : dto.Note,
-                    Quantity = dto.ActionType == "Income" ? dto.Quantity : 0,
+                    Description = string.IsNullOrWhiteSpace(dto.Note) ? "Додано через операцію" : dto.Note,
+                    Quantity = dto.Quantity,
                     Price = 0,
                     Discount = 0
                 };
-
                 _context.Items.Add(item);
                 await _context.SaveChangesAsync();
             }
             else
             {
-                // Оновлюємо кількість товару на складі
+                // 4. Оновлення кількості товару
                 if (dto.ActionType == "Income")
                 {
                     item.Quantity += dto.Quantity;
                 }
-                else if (dto.ActionType == "Expense")
+                else if (dto.ActionType == "Expense" || dto.ActionType == "Transfer")
                 {
                     if (item.Quantity < dto.Quantity)
                     {
-                        return BadRequest($"Недостатньо товару на складі. Доступно: {item.Quantity}");
+                        return BadRequest($"Недостатньо товару '{item.Name}' на складі. Наявна кількість: {item.Quantity}.");
                     }
                     item.Quantity -= dto.Quantity;
                 }
             }
 
-            // 3. Записуємо дію
+            // 5. Логування дії
             var userAction = new UserAction
             {
                 UserId = dto.UserId,
@@ -77,7 +76,7 @@ namespace ServerApp.Controllers.API
             _context.UserActions.Add(userAction);
             await _context.SaveChangesAsync();
 
-            return Ok(new { Message = "Операцію успішно збережено", ItemId = item.Id });
+            return Ok(new { Message = "Операцію успішно виконано!", ItemId = item.Id });
         }
     }
 

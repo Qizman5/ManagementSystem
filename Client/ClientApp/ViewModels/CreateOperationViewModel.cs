@@ -25,7 +25,6 @@ namespace ClientApp.ViewModels
             }
         }
 
-        // Псевдонім для ProductId
         public int ProductId
         {
             get => ItemId;
@@ -66,16 +65,14 @@ namespace ClientApp.ViewModels
             }
         }
 
-        // Псевдонім для Message
         public string Message
         {
             get => ErrorMessage;
             set => ErrorMessage = value;
         }
 
-        // Команди для збереження
         public IAsyncRelayCommand SaveOperationCommand { get; }
-        public IAsyncRelayCommand CreateActionCommand => SaveOperationCommand; // Псевдонім для CreateOperationPage.xaml
+        public IAsyncRelayCommand CreateActionCommand => SaveOperationCommand;
 
         public CreateOperationViewModel()
         {
@@ -104,7 +101,7 @@ namespace ClientApp.ViewModels
                 IsBusy = true;
                 ErrorMessage = string.Empty;
 
-                var dto = new ClientApp.Models.UserActionDto
+                var dto = new UserActionDto
                 {
                     UserId = 3,
                     ItemId = ItemId,
@@ -113,16 +110,17 @@ namespace ClientApp.ViewModels
                     Note = Note
                 };
 
-                bool success = await _apiService.CreateActionAsync(dto);
+                var (success, message) = await _apiService.CreateActionAsync(dto);
 
                 if (success)
                 {
-                    await Shell.Current.DisplayAlert("Успіх", "Операцію успішно збережено!", "OK");
+                    await Shell.Current.DisplayAlert("Успіх", message, "OK");
                     await Shell.Current.GoToAsync("//ItemsPage");
                 }
                 else
                 {
-                    await Shell.Current.DisplayAlert("Помилка", "Не вдалося виконати операцію на сервері.", "OK");
+                    ErrorMessage = message;
+                    await Shell.Current.DisplayAlert("Помилка", message, "OK");
                 }
             }
             catch (Exception ex)
