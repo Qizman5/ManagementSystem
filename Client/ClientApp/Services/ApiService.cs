@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using ClientApp.Models;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
 
@@ -133,14 +134,5 @@ namespace ClientApp.Services
         public string Name { get; set; } = string.Empty;
         public int Quantity { get; set; }
         public decimal Price { get; set; }
-    }
-
-    public class UserActionDto
-    {
-        public int UserId { get; set; } = 3; // ID користувача (3 для admin)
-        public int ItemId { get; set; }
-        public string ActionType { get; set; } = "Income"; // "Income" або "Outcome"
-        public int Quantity { get; set; }
-        public string Note { get; set; } = string.Empty;
     }
 }

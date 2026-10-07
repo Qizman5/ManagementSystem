@@ -39,6 +39,7 @@
             <Entry x:Name="QuantityEntry" 
                    Placeholder="Введіть кількість" 
                    Keyboard="Numeric" 
+                   TextChanged="OnNumericEntryTextChanged"
                    BackgroundColor="White" />
 
             <!-- Примітка -->

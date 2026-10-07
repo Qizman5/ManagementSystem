@@ -104,7 +104,7 @@ namespace ClientApp.ViewModels
                 IsBusy = true;
                 ErrorMessage = string.Empty;
 
-                var dto = new UserActionDto
+                var dto = new ClientApp.Models.UserActionDto
                 {
                     UserId = 3,
                     ItemId = ItemId,

@@ -4,14 +4,6 @@ namespace ClientApp.Models
 {
     public class Item
     {
-        // Вкладений enum, на який посилається ItemsViewModel через Item.OperationType
-        public enum OperationType
-        {
-            All,
-            Income,   // Прихід
-            Outcome   // Витрата / Списання
-        }
-
         public int Id { get; set; }
 
         public string Name { get; set; } = string.Empty;
@@ -45,6 +37,8 @@ namespace ClientApp.Models
 
         public decimal FinalPrice => Price * (1 - (Discount / 100m));
 
-        public OperationType Type { get; set; } = OperationType.Income;
+        // Змінено на string для збігу з ItemsViewModel
+        public string OperationType { get; set; } = "Income";
+        public string Type { get; set; } = "Income";
     }
 }

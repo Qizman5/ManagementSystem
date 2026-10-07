@@ -1,95 +1,93 @@
-using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using ServerApp.Data;
 using ServerApp.Models;
 
-namespace ServerApp.Controllers.Api
+namespace ServerApp.Controllers.API
 {
-    [ApiExplorerSettings(IgnoreApi = true)] // <-- Приховує контролер і зв'язані з ним схеми зі Swagger
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
-    [EnableRateLimiting("StrictPolicy")]
     public class ActionsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public ActionsController(AppDbContext context)
+        public ActionsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/actions
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserAction>>> GetActions()
-        {
-            return await _context.UserActions.ToListAsync();
-        }
-
-        // POST: api/actions
         [HttpPost]
-        public async Task<IActionResult> CreateAction([FromBody] UserAction actionModel)
+        public async Task<IActionResult> CreateAction([FromBody] CreateUserActionDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (dto == null) return BadRequest("Некоректні дані");
 
-            if (actionModel.ItemId <= 0)
-            {
-                return BadRequest(new { message = "ID товару має бути додатним числом більше 0." });
-            }
+            // 1. Шукаємо товар за ID або за назвою
+            var item = await _context.Items.FirstOrDefaultAsync(i => i.Id == dto.ItemId)
+                       ?? await _context.Items.FirstOrDefaultAsync(i => i.Name.ToLower() == dto.ItemName.ToLower());
 
-            if (actionModel.Quantity <= 0)
-            {
-                return BadRequest(new { message = "Кількість товару повинна бути більше 0." });
-            }
-
-            var item = await _context.Items.FindAsync(actionModel.ItemId);
+            // 2. Якщо товару немає — автоматично створюємо його в warehouse_db
             if (item == null)
             {
-                return NotFound(new { message = $"Товар з ID {actionModel.ItemId} не знайдено." });
-            }
-
-            var actionType = actionModel.ActionType?.Trim().ToLower();
-
-            if (actionType == "outcome" || actionType == "списання" || actionType == "shipment")
-            {
-                if (item.Quantity < actionModel.Quantity)
+                if (string.IsNullOrWhiteSpace(dto.ItemName))
                 {
-                    return BadRequest(new
-                    {
-                        message = "Недостатньо товару на складі для списання.",
-                        availableQuantity = item.Quantity,
-                        requestedQuantity = actionModel.Quantity
-                    });
+                    return BadRequest("Назву товару не вказано");
                 }
 
-                item.Quantity -= actionModel.Quantity;
-                actionModel.ActionType = "Outcome";
-            }
-            else if (actionType == "income" || actionType == "прихід" || actionType == "receipt")
-            {
-                item.Quantity += actionModel.Quantity;
-                actionModel.ActionType = "Income";
+                item = new Item
+                {
+                    Name = dto.ItemName,
+                    Description = string.IsNullOrWhiteSpace(dto.Note) ? "Створено через операцію" : dto.Note,
+                    Quantity = dto.ActionType == "Income" ? dto.Quantity : 0,
+                    Price = 0,
+                    Discount = 0
+                };
+
+                _context.Items.Add(item);
+                await _context.SaveChangesAsync();
             }
             else
             {
-                return BadRequest(new { message = "Некоректний тип операції. Допустимі значення: 'Income' або 'Outcome'." });
+                // Оновлюємо кількість товару на складі
+                if (dto.ActionType == "Income")
+                {
+                    item.Quantity += dto.Quantity;
+                }
+                else if (dto.ActionType == "Expense")
+                {
+                    if (item.Quantity < dto.Quantity)
+                    {
+                        return BadRequest($"Недостатньо товару на складі. Доступно: {item.Quantity}");
+                    }
+                    item.Quantity -= dto.Quantity;
+                }
             }
 
-            actionModel.ActionDate = DateTime.UtcNow;
-            
-            _context.UserActions.Add(actionModel);
+            // 3. Записуємо дію
+            var userAction = new UserAction
+            {
+                UserId = dto.UserId,
+                ItemId = item.Id,
+                ActionType = dto.ActionType,
+                Quantity = dto.Quantity,
+                Note = dto.Note
+            };
+
+            _context.UserActions.Add(userAction);
             await _context.SaveChangesAsync();
 
-            return StatusCode(201, new
-            {
-                message = "Операцію успішно виконано.",
-                actionId = actionModel.Id,
-                newStockQuantity = item.Quantity
-            });
+            return Ok(new { Message = "Операцію успішно збережено", ItemId = item.Id });
         }
+    }
+
+    public class CreateUserActionDto
+    {
+        public int UserId { get; set; }
+        public int ItemId { get; set; }
+        public string ItemName { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public string ActionType { get; set; } = string.Empty;
+        public string Note { get; set; } = string.Empty;
     }
 }

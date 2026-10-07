@@ -3,6 +3,8 @@ using System.Linq;
 using ClientApp.Models;
 using ClientApp.Services;
 using Microsoft.Maui.Controls;
+// Додаємо аліас, щоб усунути неоднозначність:
+using UserActionDto = ClientApp.Models.UserActionDto;
 
 namespace ClientApp.Views
 {
@@ -69,44 +71,31 @@ namespace ClientApp.Views
 
             try
             {
-                // 1. Отримуємо товари для визначення реального ID
-                var items = await _apiService.GetItemsAsync();
-                
-                // Шукаємо за назвою або беремо перший товар з бази даних
-                var foundItem = items?.FirstOrDefault(i => i.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase)) 
-                                ?? items?.FirstOrDefault();
-
-                if (foundItem == null)
-                {
-                    await DisplayAlert("Помилка", "У базі даних немає жодного товару!", "OK");
-                    return;
-                }
-
-                // 2. Формуємо тип операції
                 string selectedType = OperationTypePicker.SelectedItem?.ToString() ?? "Income";
                 string actionType = selectedType.Contains("Витрата") ? "Expense" :
                                     selectedType.Contains("Переміщення") ? "Transfer" : "Income";
 
-                // 3. Відправляємо запит з валідним ItemId
+                // Використовуємо явно вказану модель із ClientApp.Models
                 var dto = new UserActionDto
                 {
                     UserId = 3,
-                    ItemId = foundItem.Id,
+                    ItemId = 0,
+                    ItemName = itemName,
                     Quantity = quantity,
                     ActionType = actionType,
-                    Note = $"[Товар: {itemName}] {NoteEntry.Text?.Trim()}".Trim()
+                    Note = NoteEntry.Text?.Trim() ?? string.Empty
                 };
 
                 bool success = await _apiService.CreateActionAsync(dto);
 
                 if (success)
                 {
-                    await DisplayAlert("Успіх", "Операцію успішно збережено!", "OK");
+                    await DisplayAlert("Успіх", $"Товар '{itemName}' та операцію додано до бази даних!", "OK");
                     await Shell.Current.GoToAsync("//ItemsPage");
                 }
                 else
                 {
-                    await DisplayAlert("Помилка сервера", $"Сервер відхилив операцію для товару (ID: {foundItem.Id}). Перевірте наявність товару на складі.", "OK");
+                    await DisplayAlert("Помилка", "Сервер відхилив операцію. Перевірте введені дані.", "OK");
                 }
             }
             catch (Exception ex)
