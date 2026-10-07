@@ -5,10 +5,8 @@ using ServerApp.Models;
 
 namespace ServerApp.Controllers
 {
-    [Route("api/v1/items")]
-    [ApiController]
-    [Authorize(Policy = "BearerOrCookie")]
-    public class ItemsController : ControllerBase
+    [Authorize]
+    public class ItemsController : Controller
     {
         private readonly AppDbContext _context;
 
@@ -17,84 +15,33 @@ namespace ServerApp.Controllers
             _context = context;
         }
 
-        // GET: api/v1/items
+        // GET: /Items
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Item>>> GetItems([FromQuery] int limit = 25, [FromQuery] int offset = 0)
+        public async Task<IActionResult> Index()
         {
-            return await _context.Items
-                .Skip(offset)
-                .Take(limit)
-                .ToListAsync();
+            var items = await _context.Items.ToListAsync();
+            return View(items);
         }
 
-        // GET: api/v1/items/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Item>> GetItem(int id)
+        // GET: /Items/Create  <-- Відкриває сторінку створення
+        [HttpGet]
+        public IActionResult Create()
         {
-            var item = await _context.Items.FindAsync(id);
-            if (item == null)
-            {
-                return NotFound();
-            }
-            return item;
+            return View(); // Переконайтеся, що файл Views/Items/Create.cshtml існує
         }
 
-        // POST: api/v1/items
+        // POST: /Items/Create
         [HttpPost]
-        public async Task<ActionResult<Item>> CreateItem([FromBody] Item item)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Item item)
         {
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                return BadRequest(ModelState);
-            }
-
-            _context.Items.Add(item);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetItem), new { id = item.Id }, item);
-        }
-
-        // PUT: api/v1/items/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateItem(int id, [FromBody] Item item)
-        {
-            if (id != item.Id)
-            {
-                return BadRequest("ID у шляху та у тілі запиту не збігаються.");
-            }
-
-            _context.Entry(item).State = EntityState.Modified;
-
-            try
-            {
+                _context.Items.Add(item);
                 await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Items.Any(e => e.Id == id))
-                {
-                    return NotFound();
-                }
-                throw;
-            }
-
-            return Ok(item);
-        }
-
-        // DELETE: api/v1/items/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteItem(int id)
-        {
-            var item = await _context.Items.FindAsync(id);
-            if (item == null)
-            {
-                return NotFound();
-            }
-
-            _context.Items.Remove(item);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return View(item);
         }
     }
 }
