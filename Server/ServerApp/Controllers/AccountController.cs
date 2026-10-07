@@ -9,6 +9,7 @@ using BCrypt.Net;
 
 namespace ServerApp.Controllers
 {
+    [ApiExplorerSettings(IgnoreApi = true)] // Приховує весь контролер Account та його ендпоінти зі Swagger
     public class AccountController : Controller
     {
         private readonly AppDbContext _context;

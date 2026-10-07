@@ -4,6 +4,14 @@ namespace ClientApp.Models
 {
     public class Item
     {
+        // Вкладений enum, на який посилається ItemsViewModel через Item.OperationType
+        public enum OperationType
+        {
+            All,
+            Income,   // Прихід
+            Outcome   // Витрата / Списання
+        }
+
         public int Id { get; set; }
 
         public string Name { get; set; } = string.Empty;
@@ -21,7 +29,7 @@ namespace ClientApp.Models
         public decimal Price
         {
             get => _price;
-            set => _price = Math.Abs(value); // -2.00 стає 2.00
+            set => _price = Math.Abs(value);
         }
 
         private decimal _discount;
@@ -31,10 +39,12 @@ namespace ClientApp.Models
             set
             {
                 var absValue = Math.Abs(value);
-                _discount = absValue > 100 ? 100 : absValue; // -2% стає 2%
+                _discount = absValue > 100 ? 100 : absValue;
             }
         }
 
         public decimal FinalPrice => Price * (1 - (Discount / 100m));
+
+        public OperationType Type { get; set; } = OperationType.Income;
     }
 }
