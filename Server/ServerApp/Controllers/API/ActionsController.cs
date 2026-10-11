@@ -1,13 +1,13 @@
-using System;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServerApp.Models;
 
-namespace ServerApp.Controllers.API
+namespace ServerApp.Controllers.Api
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/actions")]
+    [Authorize(Policy = "BearerOrCookie")]
     public class ActionsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -17,92 +17,25 @@ namespace ServerApp.Controllers.API
             _context = context;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateAction([FromBody] CreateUserActionDto dto)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserAction>>> GetActions()
         {
-            if (dto == null) return BadRequest("Некоректні дані запиту.");
+            return await _context.UserActions
+                .Include(a => a.Worker)
+                .Include(a => a.Item)
+                .OrderByDescending(a => a.ActionDate)
+                .ToListAsync();
+        }
 
-            // 1. Перевірка наявності користувача в БД (використовуємо _context.Users)
-            var userExists = await _context.Users.AnyAsync(u => u.Id == dto.UserId);
-            if (!userExists)
-            {
-                // Якщо переданого UserId немає, підставляємо першого наявного користувача з БД
-                var firstUser = await _context.Users.FirstOrDefaultAsync();
-                if (firstUser != null)
-                {
-                    dto.UserId = firstUser.Id;
-                }
-                else
-                {
-                    return BadRequest("У системі відсутні зареєстровані користувачі.");
-                }
-            }
+        [HttpPost]
+        public async Task<ActionResult<UserAction>> CreateAction([FromBody] UserAction action)
+        {
+            if (action == null) return BadRequest("Дані операції відсутні.");
 
-            // 2. Пошук товару
-            var item = await _context.Items.FirstOrDefaultAsync(i => i.Id == dto.ItemId)
-                       ?? await _context.Items.FirstOrDefaultAsync(i => i.Name.ToLower() == dto.ItemName.ToLower());
-
-            // 3. Перевірка: якщо товару немає, а виконується Витрата або Переміщення
-            if (item == null && dto.ActionType != "Income")
-            {
-                return BadRequest($"Товар '{dto.ItemName}' не знайдено на складі. Спершу виконайте Прихід.");
-            }
-
-            // 4. Створення нового товару (якщо це Прихід)
-            if (item == null)
-            {
-                item = new Item
-                {
-                    Name = dto.ItemName,
-                    Description = string.IsNullOrWhiteSpace(dto.Note) ? "Додано через операцію" : dto.Note,
-                    Quantity = dto.Quantity,
-                    Price = 0,
-                    Discount = 0
-                };
-                _context.Items.Add(item);
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                // 5. Оновлення кількості товару
-                if (dto.ActionType == "Income")
-                {
-                    item.Quantity += dto.Quantity;
-                }
-                else if (dto.ActionType == "Expense" || dto.ActionType == "Transfer")
-                {
-                    if (item.Quantity < dto.Quantity)
-                    {
-                        return BadRequest($"Недостатньо товару '{item.Name}' на складі. Наявна кількість: {item.Quantity}.");
-                    }
-                    item.Quantity -= dto.Quantity;
-                }
-            }
-
-            // 6. Фіксація дії
-            var userAction = new UserAction
-            {
-                UserId = dto.UserId,
-                ItemId = item.Id,
-                ActionType = dto.ActionType,
-                Quantity = dto.Quantity,
-                Note = dto.Note
-            };
-
-            _context.UserActions.Add(userAction);
+            _context.UserActions.Add(action);
             await _context.SaveChangesAsync();
 
-            return Ok(new { Message = "Операцію успішно виконано!", ItemId = item.Id });
+            return CreatedAtAction(nameof(GetActions), new { id = action.Id }, action);
         }
-    }
-
-    public class CreateUserActionDto
-    {
-        public int UserId { get; set; }
-        public int ItemId { get; set; }
-        public string ItemName { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-        public string ActionType { get; set; } = string.Empty;
-        public string Note { get; set; } = string.Empty;
     }
 }

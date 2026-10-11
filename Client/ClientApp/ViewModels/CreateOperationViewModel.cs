@@ -32,6 +32,13 @@ namespace ClientApp.ViewModels
             set => ItemId = value;
         }
 
+        private string _itemName = string.Empty;
+        public string ItemName
+        {
+            get => _itemName;
+            set => SetProperty(ref _itemName, value);
+        }
+
         private int _quantity = 1;
         public int Quantity
         {
@@ -39,7 +46,7 @@ namespace ClientApp.ViewModels
             set => SetProperty(ref _quantity, value);
         }
 
-        private string _actionType = "Income";
+        private string _actionType = "Прихід (Прибуття)";
         public string ActionType
         {
             get => _actionType;
@@ -85,9 +92,10 @@ namespace ClientApp.ViewModels
         {
             if (IsBusy) return;
 
-            if (ItemId <= 0)
+            // Перевірка: має бути вказаний або ItemId (якщо обираємо існуючий), або ItemName (якщо створюємо новий)
+            if (ItemId <= 0 && string.IsNullOrWhiteSpace(ItemName))
             {
-                await Shell.Current.DisplayAlert("Помилка", "Введіть коректний ID товару", "OK");
+                await Shell.Current.DisplayAlert("Помилка", "Введіть назву товару або виберіть ID", "OK");
                 return;
             }
 
@@ -102,15 +110,25 @@ namespace ClientApp.ViewModels
                 IsBusy = true;
                 ErrorMessage = string.Empty;
 
-                // Отримуємо ID збереженого користувача або використовуємо 1 за замовчуванням
                 int currentUserId = Preferences.Get("user_id", 1);
+
+                // Конвертація типу дії з української назви UI у ключі сервера
+                string formattedActionType = ActionType switch
+                {
+                    "Прихід (Прибуття)" => "Income",
+                    "Прихід" => "Income",
+                    "Витрата" => "Expense",
+                    "Переміщення" => "Transfer",
+                    _ => ActionType
+                };
 
                 var dto = new UserActionDto
                 {
                     UserId = currentUserId,
                     ItemId = ItemId,
+                    ItemName = ItemName,
                     Quantity = Quantity,
-                    ActionType = ActionType,
+                    ActionType = formattedActionType,
                     Note = Note
                 };
 
@@ -119,6 +137,14 @@ namespace ClientApp.ViewModels
                 if (success)
                 {
                     await Shell.Current.DisplayAlert("Успіх", message, "OK");
+
+                    // Скидаємо поля форми
+                    ItemName = string.Empty;
+                    Note = string.Empty;
+                    Quantity = 1;
+                    ItemId = 0;
+
+                    // Переходимо до сторінки товарів
                     await Shell.Current.GoToAsync("//ItemsPage");
                 }
                 else

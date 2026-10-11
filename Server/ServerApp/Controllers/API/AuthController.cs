@@ -1,17 +1,15 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ServerApp.Models;
 
-namespace ServerApp.Controllers
+namespace ServerApp.Controllers.API
 {
-    [ApiExplorerSettings(IgnoreApi = true)] // <-- Приховує AuthController та LoginDto зі Swagger
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -24,100 +22,75 @@ namespace ServerApp.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto model)
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.Password))
-            {
-                return BadRequest(new { message = "Не вказано логін або пароль." });
-            }
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+                return BadRequest("Необхідно вказати Email та Password.");
 
-            var inputLogin = model.Username.Trim();
-            var inputPassword = model.Password.Trim();
+            // Шукаємо серед Workers замість застарілого User
+            Worker? worker = await _context.Workers
+                .FirstOrDefaultAsync(w => w.Email == dto.Email || w.Username == dto.Email);
 
-            // 1. Пошук користувача за Username або Email
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == inputLogin || u.Email == inputLogin);
+            if (worker == null)
+                return Unauthorized("Невірний Email або пароль.");
 
-            // Якщо користувача немає в БД — створюємо його на льоту
-            if (user == null)
-            {
-                user = new User
-                {
-                    Username = inputLogin,
-                    Email = inputLogin.Contains("@") ? inputLogin : "arotar2005@gmail.com",
-                    PasswordHash = "0000",
-                    Role = "Admin"
-                };
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-            }
-
-            // 2. Перевірка пароля
             bool isPasswordValid = false;
-            var storedHash = (user.PasswordHash ?? "").Trim();
-
-            if (inputPassword == "0000")
+            try
             {
-                isPasswordValid = true;
+                isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, worker.PasswordHash);
             }
-            else if (storedHash.StartsWith("$2a$") || storedHash.StartsWith("$2b$") || storedHash.StartsWith("$2y$"))
+            catch
             {
-                isPasswordValid = BCrypt.Net.BCrypt.Verify(inputPassword, storedHash);
-            }
-            else
-            {
-                isPasswordValid = storedHash == inputPassword;
+                isPasswordValid = worker.PasswordHash == dto.Password;
             }
 
             if (!isPasswordValid)
-            {
-                return Unauthorized(new { message = "Невірний логін або пароль." });
-            }
+                return Unauthorized("Невірний Email або пароль.");
 
-            // 3. Генерація JWT-токена
-            var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing in appsettings.json.");
-            var key = Encoding.UTF8.GetBytes(jwtKey);
+            var token = GenerateJwtToken(worker);
+
+            return Ok(new
+            {
+                token,
+                user = new
+                {
+                    worker.Id,
+                    Name = worker.Name ?? worker.Username ?? "Worker",
+                    worker.Email,
+                    Role = worker.Role ?? "Worker"
+                }
+            });
+        }
+
+        private string GenerateJwtToken(Worker worker)
+        {
+            var jwtSettings = _configuration.GetSection("Jwt");
+            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? "SuperSecretKeyForWmsSystem2026Secure!");
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, worker.Id.ToString()),
+                new Claim(ClaimTypes.Name, worker.Name ?? worker.Username ?? "Worker"),
+                new Claim(ClaimTypes.Email, worker.Email ?? string.Empty),
+                new Claim(ClaimTypes.Role, worker.Role ?? "Worker")
+            };
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Role, user.Role ?? "Admin")
-                }),
-                Expires = DateTime.UtcNow.AddHours(3),
-                Issuer = _configuration["Jwt:Issuer"],
-                Audience = _configuration["Jwt:Audience"],
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(8),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
-
-            Response.Cookies.Append("X-Access-Token", tokenString, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddHours(3)
-            });
-
-            return Ok(new 
-            { 
-                Message = "Успішна авторизація", 
-                Token = tokenString 
-            });
+            return tokenHandler.WriteToken(token);
         }
     }
 
     public class LoginDto
     {
-        [DefaultValue("admin")]
-        public string Username { get; set; } = "admin";
-
-        [DefaultValue("0000")]
-        public string Password { get; set; } = "0000";
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }

@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -20,10 +23,10 @@ namespace ServerApp.Controllers
         public async Task<IActionResult> Index()
         {
             var actions = await _context.UserActions
-                .Include(u => u.User)
-                .Include(u => u.Item)
+                .Include(a => a.Worker)
+                .Include(a => a.Item)
                 .AsNoTracking()
-                .OrderByDescending(u => u.ActionDate)
+                .OrderByDescending(a => a.ActionDate)
                 .ToListAsync();
 
             return View(actions);
@@ -33,38 +36,37 @@ namespace ServerApp.Controllers
         public IActionResult Create()
         {
             ViewData["ItemId"] = new SelectList(_context.Items.AsNoTracking(), "Id", "Name");
-            ViewData["UserId"] = new SelectList(_context.Users.AsNoTracking(), "Id", "Username");
+            ViewData["WorkerId"] = new SelectList(_context.Workers.AsNoTracking(), "Id", "Name");
             return View();
         }
 
         // POST: UserActions/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("UserId,ItemId,ActionType,Quantity,Note")] UserAction userAction)
+        public async Task<IActionResult> Create([Bind("WorkerId,ItemId,ActionType,Quantity,Note")] UserAction userAction)
         {
             userAction.ActionDate = DateTime.UtcNow;
 
             if (ModelState.IsValid)
             {
                 var item = await _context.Items.FindAsync(userAction.ItemId);
-                if (item == null) return NotFound("Товар не знайдено");
+                if (item == null) return NotFound("Товар не знайдено.");
 
                 var actionType = userAction.ActionType?.Trim().ToLower();
 
-                // Підтримка приходу товару
+                // Прихід товару
                 if (actionType == "прихід" || actionType == "income" || actionType == "receipt")
                 {
                     item.Quantity += userAction.Quantity;
                     userAction.ActionType = "Прихід";
                 }
-                // Підтримка списання товару
+                // Списання товару
                 else if (actionType == "списання" || actionType == "outcome" || actionType == "shipment")
                 {
                     if (item.Quantity < userAction.Quantity)
                     {
                         ModelState.AddModelError("Quantity", "Недостатня кількість товару на складі.");
-                        ViewData["ItemId"] = new SelectList(_context.Items.AsNoTracking(), "Id", "Name", userAction.ItemId);
-                        ViewData["UserId"] = new SelectList(_context.Users.AsNoTracking(), "Id", "Username", userAction.UserId);
+                        PopulateSelectLists(userAction.ItemId, userAction.WorkerId);
                         return View(userAction);
                     }
                     item.Quantity -= userAction.Quantity;
@@ -73,19 +75,20 @@ namespace ServerApp.Controllers
                 else
                 {
                     ModelState.AddModelError("ActionType", "Некоректний тип операції.");
-                    ViewData["ItemId"] = new SelectList(_context.Items.AsNoTracking(), "Id", "Name", userAction.ItemId);
-                    ViewData["UserId"] = new SelectList(_context.Users.AsNoTracking(), "Id", "Username", userAction.UserId);
+                    PopulateSelectLists(userAction.ItemId, userAction.WorkerId);
                     return View(userAction);
                 }
 
-                _context.Add(userAction);
-                _context.Update(item);
+                // Фіксуємо ціну товару на момент здійснення операції
+                userAction.PriceAtMoment = item.Price;
+
+                _context.UserActions.Add(userAction);
+                _context.Items.Update(item);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["ItemId"] = new SelectList(_context.Items.AsNoTracking(), "Id", "Name", userAction.ItemId);
-            ViewData["UserId"] = new SelectList(_context.Users.AsNoTracking(), "Id", "Username", userAction.UserId);
+            PopulateSelectLists(userAction.ItemId, userAction.WorkerId);
             return View(userAction);
         }
 
@@ -97,7 +100,7 @@ namespace ServerApp.Controllers
 
             var action = await _context.UserActions
                 .Include(u => u.Item)
-                .Include(u => u.User)
+                .Include(u => u.Worker)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -119,6 +122,12 @@ namespace ServerApp.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        private void PopulateSelectLists(int selectedItemId, int selectedWorkerId)
+        {
+            ViewData["ItemId"] = new SelectList(_context.Items.AsNoTracking(), "Id", "Name", selectedItemId);
+            ViewData["WorkerId"] = new SelectList(_context.Workers.AsNoTracking(), "Id", "Name", selectedWorkerId);
         }
     }
 }

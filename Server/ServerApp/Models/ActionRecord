@@ -1,0 +1,59 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace ServerApp.Models
+{
+    [Table("Actions")]
+    public class ActionRecord
+    {
+        [Key]
+        public int ID { get; set; }
+
+        [NotMapped]
+        public int Id { get => ID; set => ID = value; }
+
+        public int WorkerID { get; set; }
+
+        [NotMapped]
+        public int WorkerId { get => WorkerID; set => WorkerID = value; }
+
+        public int ProductID { get; set; }
+
+        [NotMapped]
+        public int ProductId { get => ProductID; set => ProductID = value; }
+
+        public string ActionType { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal PriceAtMoment { get; set; }
+        public string? Note { get; set; }
+        public DateTime ActionDate { get; set; } = DateTime.UtcNow;
+
+        [ForeignKey("WorkerID")]
+        public Worker? Worker { get; set; }
+
+        [ForeignKey("ProductID")]
+        public Product? Product { get; set; }
+
+        [NotMapped]
+        public Product? Item { get => Product; set => Product = value; }
+
+        public static implicit operator UserAction?(ActionRecord? action)
+        {
+            if (action == null) return null;
+            return new UserAction
+            {
+                ID = action.ID,
+                WorkerID = action.WorkerID,
+                ProductID = action.ProductID,
+                ActionType = action.ActionType,
+                Quantity = action.Quantity,
+                PriceAtMoment = action.PriceAtMoment,
+                Note = action.Note,
+                ActionDate = action.ActionDate,
+                Worker = action.Worker,
+                Product = action.Product
+            };
+        }
+    }
+}

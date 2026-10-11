@@ -15,7 +15,6 @@ namespace ClientApp.ViewModels
     {
         private readonly ApiService _apiService;
 
-        // Приватний кеш та прапорець ініціалізації для оптимізації UI
         private List<Item> _cachedItems = new();
         private bool _isInitialized = false;
 
@@ -41,7 +40,22 @@ namespace ClientApp.ViewModels
         public ItemsViewModel()
         {
             _apiService = new ApiService();
-            _ = LoadItemsAsync();
+            _ = LoadItemsAsync(true);
+        }
+
+        // Викликається автоматично при переході на сторінку
+        public async Task OnAppearingAsync()
+        {
+            await LoadItemsAsync(forceRefresh: true);
+        }
+
+        // Команда для Pull-to-Refresh або кнопки "Оновити"
+        [RelayCommand]
+        public async Task RefreshAsync()
+        {
+            IsRefreshing = true;
+            await LoadItemsAsync(forceRefresh: true);
+            IsRefreshing = false;
         }
 
         // Перехід на сторінку створення операції
@@ -61,11 +75,10 @@ namespace ClientApp.ViewModels
             }
         }
 
-        // Оптимізований метод завантаження товарів із підтримкою кешу та параметра примусового оновлення
         [RelayCommand]
         public async Task LoadItemsAsync(bool forceRefresh = false)
         {
-            // Якщо дані вже завантажені і не вимагається примусове оновлення — беремо з кешу
+            // Якщо кеш є і примусове оновлення НЕ вимагається — беремо з кешу
             if (_isInitialized && !forceRefresh && _cachedItems.Count > 0)
             {
                 UpdateItemsCollection(_cachedItems);
@@ -77,7 +90,6 @@ namespace ClientApp.ViewModels
             try
             {
                 IsBusy = true;
-                IsRefreshing = true;
                 ErrorMessage = string.Empty;
 
                 List<ItemDto>? result = null;
@@ -91,35 +103,36 @@ namespace ClientApp.ViewModels
                     System.Diagnostics.Debug.WriteLine($"[Network Error]: {netEx.Message}");
                 }
 
+                var newList = new List<Item>();
+
+                if (result != null && result.Count > 0)
+                {
+                    foreach (var dto in result)
+                    {
+                        newList.Add(new Item
+                        {
+                            Id = dto.Id,
+                            Name = dto.Name,
+                            Quantity = dto.Quantity,
+                            OperationType = "Прихід (Прибуття)"
+                        });
+                    }
+                }
+                else
+                {
+                    // Резервні дані, якщо сервер не дав відповіді
+                    foreach (var item in FallbackItems)
+                    {
+                        newList.Add(item);
+                    }
+                }
+
+                _cachedItems = newList;
+                _isInitialized = true;
+
+                // Оновлюємо UI у головному потоці
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    var newList = new List<Item>();
-
-                    if (result != null && result.Count > 0)
-                    {
-                        foreach (var dto in result)
-                        {
-                            newList.Add(new Item
-                            {
-                                Id = dto.Id,
-                                Name = dto.Name,
-                                Quantity = dto.Quantity,
-                                OperationType = "Прихід (Прибуття)"
-                            });
-                        }
-                    }
-                    else
-                    {
-                        // Якщо сервер не дав даних, підставляємо локальні резервні дані
-                        foreach (var item in FallbackItems)
-                        {
-                            newList.Add(item);
-                        }
-                    }
-
-                    // Зберігаємо в кеш та оновлюємо колекцію екрана
-                    _cachedItems = newList;
-                    _isInitialized = true;
                     UpdateItemsCollection(_cachedItems);
                 });
             }
@@ -130,7 +143,6 @@ namespace ClientApp.ViewModels
             finally
             {
                 IsBusy = false;
-                IsRefreshing = false;
             }
         }
 

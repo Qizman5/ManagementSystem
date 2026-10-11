@@ -1,24 +1,37 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using ServerApp.Models;
 
 namespace ServerApp.Controllers
 {
-    [Authorize(Roles = "Admin")] // Доступ дозволено тільки користувачам з роллю Admin
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
-        public IActionResult Index()
-        {
-            // Передаємо основну метрику та стан систем у View
-            ViewBag.ServerStatus = "Online";
-            ViewBag.ClientStatus = "Active";
-            
-            // Інформація про систему
-            ViewBag.Uptime = TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"d'd 'h'h 'm'm'");
-            ViewBag.OsVersion = Environment.OSVersion.ToString();
-            ViewBag.ProcessMemory = (Process.GetCurrentProcess().WorkingSet64 / (1024 * 1024)).ToString() + " MB";
+        private readonly AppDbContext _context;
 
-            return View();
+        public AdminController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: Admin
+        public async Task<IActionResult> Index()
+        {
+            var items = await _context.Items.AsNoTracking().ToListAsync();
+            return View(items);
+        }
+
+        // GET: Admin/Edit/1
+        public IActionResult Edit(int id)
+        {
+            return RedirectToAction("Edit", "Items", new { id });
+        }
+
+        // GET: Admin/Delete/1
+        public IActionResult Delete(int id)
+        {
+            return RedirectToAction("Delete", "Items", new { id });
         }
     }
 }

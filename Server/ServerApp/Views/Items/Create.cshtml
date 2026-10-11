@@ -77,16 +77,6 @@
                 <span asp-validation-for="Name" class="text-danger small"></span>
             </div>
 
-            <!-- Опис товару -->
-            <div class="mb-3">
-                <label asp-for="Description" class="form-label fw-semibold text-slate-300 small">Опис (необов'язково)</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                    <textarea asp-for="Description" class="form-control" rows="3" style="resize: none;" placeholder="Короткий опис товару..."></textarea>
-                </div>
-                <span asp-validation-for="Description" class="text-danger small"></span>
-            </div>
-
             <!-- Кількість та Базова ціна -->
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
@@ -101,7 +91,7 @@
                     <label asp-for="Price" class="form-label fw-semibold text-slate-300 small">Базова ціна (₴)</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
-                        <input asp-for="Price" type="number" step="0.01" min="0.01" class="form-control" placeholder="0.00" required />
+                        <input asp-for="Price" type="number" step="0.01" min="0.00" class="form-control" placeholder="0.00" required />
                     </div>
                     <span asp-validation-for="Price" class="text-danger small"></span>
                 </div>
@@ -112,7 +102,7 @@
                 <label asp-for="Discount" class="form-label fw-semibold text-slate-300 small">Знижка (%)</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-percent"></i></span>
-                    <input asp-for="Discount" type="number" min="0" max="100" class="form-control" placeholder="0" />
+                    <input asp-for="Discount" type="number" step="0.01" min="0" max="100" class="form-control" placeholder="0" />
                 </div>
                 <span asp-validation-for="Discount" class="text-danger small"></span>
             </div>

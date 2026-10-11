@@ -163,13 +163,27 @@ var app = builder.Build();
 // 9. Проксі-заголовки
 app.UseForwardedHeaders();
 
-// 10. Перестворення бази даних для застосування актуальної схеми
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureDeleted();
+
     dbContext.Database.EnsureCreated();
+
+    if (!dbContext.Workers.Any())
+    {
+        dbContext.Workers.Add(new Worker
+        {
+            Name = "System Admin",
+            Username = "admin",
+            FullName = "System Admin",
+            Email = "arotar2005@gmail.com",
+            PasswordHash = "0000",
+            Role = "Admin"
+        });
+        dbContext.SaveChanges();
+    }
 }
+
 
 // 11. Активація Swagger UI
 if (app.Environment.IsDevelopment())

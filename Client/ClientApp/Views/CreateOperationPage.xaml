@@ -2,61 +2,37 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ClientApp.Views.CreateOperationPage"
-             Title="Створення операції"
-             BackgroundColor="#F4F5F9">
+             Title="Створення операції">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="16">
+        <VerticalStackLayout Padding="20" Spacing="15">
 
-            <Label Text="Створення складської операції" 
-                   FontSize="20" 
-                   FontAttributes="Bold" 
-                   TextColor="#1E1E2C" 
-                   HorizontalOptions="Center" />
+            <Label Text="Назва товару" FontAttributes="Bold" />
+            <Entry x:Name="ItemNameEntry" Placeholder="Введіть назву товару" />
 
-            <!-- Тип операції -->
-            <Label Text="Тип операції:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
-            <Picker x:Name="OperationTypePicker" 
-                    Title="Оберіть тип операції"
-                    BackgroundColor="White">
+            <Label Text="Тип операції" FontAttributes="Bold" />
+            <Picker x:Name="OperationTypePicker" Title="Оберіть тип">
                 <Picker.ItemsSource>
                     <x:Array Type="{x:Type x:String}">
-                        <x:String>Прихід (Прибуття)</x:String>
-                        <x:String>Витрата (Відвантаження)</x:String>
-                        <x:String>Переміщення</x:String>
+                        <x:String>Прихід (Income)</x:String>
+                        <x:String>Витрата (Expense)</x:String>
+                        <x:String>Переміщення (Transfer)</x:String>
                     </x:Array>
                 </Picker.ItemsSource>
             </Picker>
 
-            <!-- Назва товару -->
-            <Label Text="Назва товару:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
-            <Entry x:Name="ItemNameEntry" 
-                   Placeholder="Введіть назву товару" 
-                   BackgroundColor="White" />
-
-            <!-- Кількість -->
-            <Label Text="Кількість:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
+            <Label Text="Кількість" FontAttributes="Bold" />
             <Entry x:Name="QuantityEntry" 
-                   Placeholder="Введіть кількість" 
                    Keyboard="Numeric" 
-                   TextChanged="OnNumericEntryTextChanged"
-                   BackgroundColor="White" />
+                   Placeholder="Введіть кількість" 
+                   TextChanged="OnNumericEntryTextChanged" />
 
-            <!-- Примітка -->
-            <Label Text="Примітка:" FontSize="14" FontAttributes="Bold" TextColor="#757575" />
-            <Entry x:Name="NoteEntry" 
-                   Placeholder="Додайте примітку (необов'язково)" 
-                   BackgroundColor="White" />
+            <Label Text="Примітка" FontAttributes="Bold" />
+            <Entry x:Name="NoteEntry" Placeholder="Введіть примітку (необов'язково)" />
 
-            <!-- Кнопка збереження -->
             <Button Text="Зберегти операцію" 
-                    Clicked="OnSaveOperationClicked" 
-                    BackgroundColor="#2E7D32" 
-                    TextColor="White" 
-                    FontAttributes="Bold" 
-                    CornerRadius="10" 
-                    HeightRequest="50" 
-                    Margin="0,20,0,0" />
+                    Margin="0,20,0,0" 
+                    Clicked="OnSaveOperationClicked" />
 
         </VerticalStackLayout>
     </ScrollView>

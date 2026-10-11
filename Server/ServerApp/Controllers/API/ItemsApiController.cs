@@ -5,10 +5,6 @@ using ServerApp.Models;
 
 namespace ServerApp.Controllers.Api
 {
-    /// <summary>
-    /// RESTful API для управління ресурсом 'items' (Товари складе)
-    /// Відповідає специфікації OpenAPI та стандартам Integrate.io
-    /// </summary>
     [ApiController]
     [Route("api/v1/items")]
     [Produces("application/json")]
@@ -23,10 +19,6 @@ namespace ServerApp.Controllers.Api
             _context = context;
         }
 
-        /// <summary>
-        /// READ (List): Отримати список товарів з фільтрацією та пагінацією
-        /// GET /api/v1/items?search=name&limit=25&offset=0
-        /// </summary>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Item>))]
         public async Task<ActionResult<IEnumerable<Item>>> GetItems(
@@ -40,17 +32,13 @@ namespace ServerApp.Controllers.Api
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(i => i.Name.Contains(search) || i.Description.Contains(search));
+                query = query.Where(i => i.Name.Contains(search));
             }
 
             var items = await query.Skip(offset).Take(limit).ToListAsync();
             return Ok(items);
         }
 
-        /// <summary>
-        /// READ (Single): Отримати конкретний ресурс за його ID
-        /// GET /api/v1/items/{id}
-        /// </summary>
         [HttpGet("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Item))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -66,10 +54,6 @@ namespace ServerApp.Controllers.Api
             return Ok(item);
         }
 
-        /// <summary>
-        /// CREATE: Створити новий ресурс
-        /// POST /api/v1/items
-        /// </summary>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Item))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -80,14 +64,10 @@ namespace ServerApp.Controllers.Api
             _context.Items.Add(item);
             await _context.SaveChangesAsync();
 
-            // Повертає статус 201 Created та заголовок 'Location' із посиланням на новий ресурс
+            // Виправлено: item.Id замість застарілого item.ID
             return CreatedAtAction(nameof(GetItemById), new { id = item.Id }, item);
         }
 
-        /// <summary>
-        /// UPDATE (Full): Повне оновлення ресурсу
-        /// PUT /api/v1/items/{id}
-        /// </summary>
         [HttpPut("{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Item))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -117,10 +97,6 @@ namespace ServerApp.Controllers.Api
             return Ok(item);
         }
 
-        /// <summary>
-        /// DELETE: Видалення ресурсу
-        /// DELETE /api/v1/items/{id}
-        /// </summary>
         [HttpDelete("{id:int}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -135,7 +111,6 @@ namespace ServerApp.Controllers.Api
             _context.Items.Remove(item);
             await _context.SaveChangesAsync();
 
-            // За стандартом REST відповідає 204 No Content при успішному видаленні
             return NoContent();
         }
     }
