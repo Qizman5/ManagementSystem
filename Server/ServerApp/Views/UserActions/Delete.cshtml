@@ -1,0 +1,99 @@
+@model ServerApp.Models.UserAction
+@{
+    ViewData["Title"] = "Видалення операції";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Видалення операції - AdminConsole</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: #131b2e;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-red: #ef4444;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #f1f5f9;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .details-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="delete-card">
+        <div class="text-center mb-4">
+            <i class="bi bi-exclamation-triangle-fill text-danger fs-1"></i>
+            <h4 class="fw-bold text-white mt-2">Видалити операцію?</h4>
+            <p class="text-muted small">Ви дійсно бажаєте вилучити цей запис із журналу?</p>
+        </div>
+
+        <div class="details-box mb-4">
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted small">ID запису:</span>
+                <span class="fw-bold font-monospace text-white">#@Model.Id</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted small">Товар:</span>
+                <span class="fw-semibold text-white">@(Model.Item?.Name ?? "—")</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted small">Працівник:</span>
+                <span class="text-white">@(Model.Worker?.Name ?? Model.Worker?.Username ?? "—")</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted small">Тип операції:</span>
+                <span class="badge bg-secondary">@Model.ActionType</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span class="text-muted small">Кількість:</span>
+                <span class="fw-bold text-info">@Model.Quantity шт.</span>
+            </div>
+        </div>
+
+        <form asp-action="DeleteConfirmed" method="post" class="d-flex gap-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            
+            <a href="/UserActions" class="btn btn-outline-secondary rounded-3 w-50 py-2">
+                Скасувати
+            </a>
+            <button type="submit" class="btn btn-danger rounded-3 w-50 py-2 fw-semibold">
+                <i class="bi bi-trash-fill me-1"></i> Видалити
+            </button>
+        </form>
+    </div>
+
+</body>
+</html>
