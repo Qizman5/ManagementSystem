@@ -13,7 +13,7 @@
         <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
     </FlyoutItem>
 
-    <!-- 2. Список товарів -->
+    <!-- 2. Список товарів (Доступно всім) -->
     <FlyoutItem Title="📦 Список товарів" Route="ItemsPage">
         <ShellContent ContentTemplate="{DataTemplate views:ItemsPage}" />
     </FlyoutItem>
@@ -23,7 +23,7 @@
         <ShellContent ContentTemplate="{DataTemplate views:CreateOperationPage}" />
     </FlyoutItem>
 
-    <!-- 4. Адмін-панель (Прихована за замовчуванням) -->
+    <!-- 4. Адмін-панель (Прихована за замовчуванням для Worker) -->
     <FlyoutItem x:Name="AdminFlyoutItem" Title="🛡️ Адмін-панель" Route="AdminPage" IsVisible="False">
         <ShellContent ContentTemplate="{DataTemplate adminViews:AdminPage}" />
     </FlyoutItem>

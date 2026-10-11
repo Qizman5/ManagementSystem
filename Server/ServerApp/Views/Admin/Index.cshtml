@@ -1,6 +1,6 @@
 @model IEnumerable<ServerApp.Models.Item>
 @{
-    ViewData["Title"] = "AdminConsole - Управління";
+    ViewData["Title"] = "Панель Управління складом";
     Layout = null;
 }
 
@@ -9,189 +9,149 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AdminConsole</title>
-    
+    <title>AdminConsole - Панель Управління</title>
+    <!-- Bootstrap 5 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
 
     <style>
         :root {
-            --bg-dark: #0b0f19;
+            --bg-main: #0b0f19;
             --card-bg: #131b2e;
-            --border-color: rgba(255, 255, 255, 0.08);
-            --accent-purple: #8b5cf6;
+            --card-border: rgba(255, 255, 255, 0.08);
             --accent-blue: #3b82f6;
+            --text-muted: #64748b;
         }
 
         body {
-            background-color: var(--bg-dark);
+            background-color: var(--bg-main);
             color: #f1f5f9;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .navbar-custom {
-            background-color: #0d1322;
-            border-bottom: 1px solid var(--border-color);
+            background: rgba(11, 15, 25, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--card-border);
         }
 
-        /* Блок адміністрування БД */
-        .admin-card {
+        .dashboard-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(12, 1fr);
+            width: 100%;
+        }
+
+        .glass-card {
             background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
-        .admin-card:hover {
-            border-color: rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-nav-blue {
-            background-color: rgba(59, 130, 246, 0.1);
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            padding: 0.5rem 1.25rem;
-            border-radius: 10px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
+        .card-header-custom {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s ease;
+            margin-bottom: 1rem;
         }
 
-        .btn-nav-blue:hover {
-            background-color: #3b82f6;
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-            transform: translateY(-1px);
-        }
-
-        .btn-nav-teal {
-            background-color: rgba(20, 184, 166, 0.1);
-            color: #2dd4bf;
-            border: 1px solid rgba(20, 184, 166, 0.3);
-            padding: 0.5rem 1.25rem;
-            border-radius: 10px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s ease;
-        }
-
-        .btn-nav-teal:hover {
-            background-color: #14b8a6;
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
-            transform: translateY(-1px);
-        }
-
-        /* Таблиця товарів */
-        .table-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        .table-responsive {
+            border-radius: 8px;
             overflow: hidden;
         }
 
-        .custom-table {
-            color: #e2e8f0;
+        .table-custom {
+            --bs-table-bg: transparent;
+            --bs-table-color: #cbd5e1;
             margin-bottom: 0;
-            vertical-align: middle;
+            border-color: var(--card-border);
         }
 
-        .custom-table thead tr {
-            background-color: rgba(15, 23, 42, 0.8);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .custom-table th {
+        .table-custom th {
+            background-color: rgba(255, 255, 255, 0.03);
             color: #94a3b8;
             font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 1.1rem 1rem;
-            font-weight: 700;
-            border: none;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 1rem;
         }
 
-        .custom-table td {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            padding: 1rem;
-            background: transparent;
+        .table-custom td {
+            padding: 0.85rem 1rem;
+            vertical-align: middle;
+            background-color: transparent !important;
+            color: #f1f5f9;
         }
 
-        .custom-table tbody tr:hover td {
-            background-color: rgba(255, 255, 255, 0.03);
+        .empty-state-row td {
+            background-color: transparent !important;
+            color: var(--text-muted) !important;
         }
 
-        .badge-quantity {
-            background-color: rgba(56, 189, 248, 0.12);
-            color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.25);
-            font-weight: 600;
-            padding: 0.4em 0.75em;
-            border-radius: 8px;
-        }
-
-        .badge-discount {
-            background-color: rgba(245, 158, 11, 0.15);
-            color: #fbbf24;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            font-weight: 600;
-            padding: 0.35em 0.65em;
-            border-radius: 8px;
-        }
-
-        .btn-action-edit {
-            background-color: rgba(245, 158, 11, 0.1);
-            color: #fbbf24;
-            border: 1px solid rgba(245, 158, 11, 0.25);
-            transition: all 0.2s;
-        }
-        .btn-action-edit:hover {
-            background-color: #f59e0b;
-            color: #000;
-        }
-
-        .btn-action-delete {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.25);
-            transition: all 0.2s;
-        }
-        .btn-action-delete:hover {
-            background-color: #ef4444;
+        .btn-neon {
+            background-color: var(--accent-blue);
             color: #fff;
-        }
-
-        .btn-gradient {
-            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
             border: none;
-            color: white;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
             transition: all 0.2s ease;
         }
 
-        /* Media Queries Адаптивність */
-        @@media screen and (max-width: 992px) {
-            .grid-dashboard {
-                grid-template-columns: 1fr !important;
-            }
+        .btn-neon:hover {
+            background-color: #2563eb;
+            color: #fff;
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
         }
 
-        @@media screen and (max-width: 576px) {
-            .admin-card-actions {
-                flex-direction: column;
-                align-items: stretch;
+        .badge-count {
+            background: rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+        }
+    </style>
+
+    <style type="text/css">
+        @@media (min-width: 1200px) {
+            .col-module-1 { grid-column: span 3; }
+            .col-module-2 { grid-column: span 3; }
+            .col-module-main { grid-column: span 6; }
+        }
+
+        @@media (min-width: 992px) and (max-width: 1199.98px) {
+            .col-module-1 { grid-column: span 6; }
+            .col-module-2 { grid-column: span 6; }
+            .col-module-main { grid-column: span 12; }
+        }
+
+        @@media (min-width: 768px) and (max-width: 991.98px) {
+            .col-module-1 { grid-column: span 12; }
+            .col-module-2 { grid-column: span 12; }
+            .col-module-main { grid-column: span 12; }
+        }
+
+        @@media (max-width: 767.98px) {
+            .dashboard-grid {
+                gap: 1rem;
             }
-            .btn-nav-blue, .btn-nav-teal {
+            .col-module-1, .col-module-2, .col-module-main {
+                grid-column: span 12;
+            }
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 1rem;
+            }
+            .btn-add-product {
+                width: 100%;
                 justify-content: center;
             }
         }
@@ -199,131 +159,153 @@
 </head>
 <body>
 
-    <!-- Шапка -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-3 mb-4">
-        <div class="container-fluid px-3 px-md-4">
-            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-primary fs-5" href="/Admin">
-                <i class="bi bi-shield-lock-fill text-primary"></i> Admin<span class="text-white">Console</span>
+    <!-- Навігація -->
+    <nav class="navbar navbar-dark navbar-custom px-3 py-2 mb-4">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-white fs-5" href="/Admin">
+                <i class="bi bi-shield-check text-primary"></i>
+                <span>Admin <span class="text-secondary fw-normal">Console</span></span>
             </a>
-            <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-outline-danger btn-sm rounded-3 px-3">
-                    <i class="bi bi-box-arrow-right me-1"></i> Вийти
-                </button>
-            </form>
+            <div class="d-flex align-items-center gap-3">
+                <a href="/Items/Create" class="btn btn-neon btn-sm px-3 py-1.5 rounded-2 d-inline-flex align-items-center gap-1 btn-add-product">
+                    <i class="bi bi-plus"></i> Додати товар
+                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-2 px-3">
+                        <i class="bi bi-box-arrow-right"></i> Вийти
+                    </button>
+                </form>
+            </div>
         </div>
     </nav>
 
-    <main class="container-fluid px-3 px-md-4">
+    <!-- Основна область -->
+    <main class="container-fluid px-3 px-md-4 flex-grow-1">
+        
+        <div class="header-actions d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h2 class="fw-bold fs-4 mb-1">Система управління складом</h2>
+                <p class="text-secondary small mb-0">Моніторинг сервісів, REST API та керування товарним складом</p>
+            </div>
+        </div>
 
-        <!-- Блок «Адміністрування БД» -->
-        <div class="row mb-4">
-            <div class="col-12 col-lg-6">
-                <div class="admin-card">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-database-fill text-primary fs-5"></i>
-                        <h5 class="fw-bold mb-0 text-white">Адміністрування БД</h5>
+        <div class="dashboard-grid">
+
+            <!-- Модуль ServerApp -->
+            <div class="col-module-1">
+                <div class="glass-card">
+                    <div class="card-header-custom">
+                        <span class="text-secondary small">Модуль ServerApp</span>
+                        <i class="bi bi-server text-primary"></i>
                     </div>
-                    <p class="text-muted small mb-3">
-                        Швидкий доступ до баз даних, списку користувачів та операційних логів.
-                    </p>
-                    <div class="d-flex gap-2 admin-card-actions">
-                        <a asp-controller="Users" asp-action="Index" class="btn-nav-blue">
-                            <i class="bi bi-people-fill"></i> Користувачі
-                        </a>
-                        <a asp-controller="UserActions" asp-action="Index" class="btn-nav-teal">
-                            <i class="bi bi-journal-text"></i> Операції
-                        </a>
-                    </div>
+                    <h5 class="fw-bold mb-1">ServerApp</h5>
+                    <p class="text-secondary small">Проєкт скомпільовано: Core</p>
                 </div>
             </div>
-        </div>
 
-        <!-- Заголовок розділу «Управління Товарами» -->
-        <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
-            <div>
-                <h3 class="fw-bold text-white mb-1 d-flex align-items-center gap-2">
-                    <i class="bi bi-boxes text-primary"></i> Управління Товарами
-                </h3>
-                <p class="text-muted small mb-0">Моніторинг та керування складським залишком</p>
+            <!-- Модуль ClientApp -->
+            <div class="col-module-2">
+                <div class="glass-card">
+                    <div class="card-header-custom">
+                        <span class="text-secondary small">Модуль ClientApp</span>
+                        <i class="bi bi-display text-info"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1">ClientApp</h5>
+                    <p class="text-secondary small">Frontend / REST API</p>
+                </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <a asp-controller="Items" asp-action="Create" class="btn btn-gradient fw-semibold rounded-3 px-3 py-2 text-decoration-none">
-                    <i class="bi bi-plus-lg me-1"></i> Додати товар
-                </a>
-                <span class="badge bg-dark border border-secondary border-opacity-20 text-muted rounded-pill px-3 py-2 fs-6">
-                    Всього товарів: <span class="text-white fw-bold">@(Model?.Count() ?? 0)</span>
-                </span>
-            </div>
-        </div>
 
-        <!-- Таблиця товарів -->
-        <div class="table-card mb-5">
-            <div class="table-responsive">
-                <table class="table custom-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 80px;" class="ps-4">ID</th>
-                            <th>НАЗВА ТОВАРУ</th>
-                            <th>КІЛЬКІСТЬ</th>
-                            <th>БАЗОВА ЦІНА</th>
-                            <th>ЗНИЖКА</th>
-                            <th>КІНЦЕВА ЦІНА</th>
-                            <th class="text-end pe-4">ДІЇ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model != null && Model.Any())
-                        {
-                            @foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td class="ps-4 text-muted font-monospace">#@item.Id</td>
-                                    <td class="fw-semibold text-white">@item.Name</td>
-                                    <td>
-                                        <span class="badge badge-quantity">
-                                            @item.Quantity шт.
-                                        </span>
-                                    </td>
-                                    <td class="text-slate-300">@item.Price.ToString("N2") ₴</td>
-                                    <td>
-                                        @if (item.Discount > 0)
+            <!-- Головний модуль: БД та Товари -->
+            <div class="col-module-main">
+                <div class="glass-card gap-4">
+                    
+                    <!-- Блок адміністрування БД -->
+                    <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border);">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-database text-primary"></i>
+                            <h6 class="fw-bold mb-0">Адміністрування БД</h6>
+                        </div>
+                        <p class="text-secondary small mb-3">Швидкий доступ до баз даних, списку користувачів та операційних логів.</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <!-- Працюючі кнопки-посилання -->
+                            <a href="/Users" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                <i class="bi bi-people me-1"></i> Користувачі
+                            </a>
+                            <a href="/UserActions" class="btn btn-sm btn-outline-info rounded-pill px-3">
+                                <i class="bi bi-journal-text me-1"></i> Операції
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Таблиця товарів -->
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                                <i class="bi bi-box-seam text-primary"></i> Управління Товарами
+                            </h6>
+                            <span class="badge badge-count">Всього товарів: @(Model?.Count() ?? 0)</span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-custom align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Назва товару</th>
+                                        <th>Кількість</th>
+                                        <th>Базова ціна</th>
+                                        <th>Знижка</th>
+                                        <th>Кінцева ціна</th>
+                                        <th class="text-end">Дії</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model != null && Model.Any())
+                                    {
+                                        @foreach (var item in Model)
                                         {
-                                            <span class="badge badge-discount">-@item.Discount%</span>
+                                            <tr>
+                                                <td class="text-secondary">#@item.Id</td>
+                                                <td class="fw-semibold">@item.Name</td>
+                                                <td>@item.Quantity шт.</td>
+                                                <td>@item.Price.ToString("N2") ₴</td>
+                                                <td>
+                                                    @if (item.Discount > 0)
+                                                    {
+                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">-@item.Discount%</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-secondary">0%</span>
+                                                    }
+                                                </td>
+                                                <td class="text-success fw-bold">@item.FinalPrice.ToString("N2") ₴</td>
+                                                <td class="text-end">
+                                                    <a href="/Admin/Edit/@item.Id" class="btn btn-sm btn-outline-warning me-1"><i class="bi bi-pencil"></i></a>
+                                                    <a href="/Admin/Delete/@item.Id" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                                                </td>
+                                            </tr>
                                         }
-                                        else
-                                        {
-                                            <span class="text-muted small">0%</span>
-                                        }
-                                    </td>
-                                    <td class="fw-bold text-success">@item.FinalPrice.ToString("N2") ₴</td>
-                                    <td class="text-end pe-4">
-                                        <div class="btn-group btn-group-sm">
-                                            <a asp-controller="Admin" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-action-edit rounded-2 me-1 p-2 px-2.5" title="Редагувати">
-                                                <i class="bi bi-pencil-fill"></i>
-                                            </a>
-                                            <a asp-controller="Admin" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-action-delete rounded-2 p-2 px-2.5" title="Видалити">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
-                                    Товари відсутні у базі даних
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                                    }
+                                    else
+                                    {
+                                        <tr class="empty-state-row">
+                                            <td colspan="7" class="text-center py-5">
+                                                <i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>
+                                                <span>Товари відсутні у базі даних</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
+                </div>
+            </div>
+
+        </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

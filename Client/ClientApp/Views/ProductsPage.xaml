@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ClientApp.Views.ProductsPage"
+             Title="Список товарів">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Вийти" Clicked="OnLogoutClicked" Priority="0" Order="Primary" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Список товарів -->
+        <CollectionView Grid.Row="1" x:Name="ProductsCollectionView" Margin="10">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Margin="0,5" Padding="15" CornerRadius="10" HasShadow="True">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
+                                <Label Text="{Binding Price, StringFormat='Ціна: {0:N2} ₴'}" TextColor="Gray" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1" Text="{Binding Quantity, StringFormat='{0} шт.'}" VerticalOptions="Center" FontAttributes="Bold" TextColor="Blue" />
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

@@ -6,6 +6,7 @@ using ServerApp.Models;
 namespace ServerApp.Controllers
 {
     [Authorize(Roles = "Admin")]
+    [ApiExplorerSettings(IgnoreApi = true)] // 👈 Приховує блок Admin зі Swagger
     public class AdminController : Controller
     {
         private readonly AppDbContext _context;

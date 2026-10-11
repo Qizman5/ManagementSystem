@@ -7,9 +7,6 @@ namespace ServerApp.Controllers.Api
 {
     [ApiController]
     [Route("api/v1/items")]
-    [Produces("application/json")]
-    [Consumes("application/json")]
-    [Authorize(Policy = "BearerOrCookie")]
     public class ItemsApiController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -19,44 +16,24 @@ namespace ServerApp.Controllers.Api
             _context = context;
         }
 
+        // GET: api/v1/items
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Item>))]
-        public async Task<ActionResult<IEnumerable<Item>>> GetItems(
-            [FromQuery] string? search = null,
-            [FromQuery] int limit = 25,
-            [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<Item>>> GetItems()
         {
-            if (limit > 100) limit = 100;
-
-            var query = _context.Items.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                query = query.Where(i => i.Name.Contains(search));
-            }
-
-            var items = await query.Skip(offset).Take(limit).ToListAsync();
-            return Ok(items);
+            return await _context.Items.AsNoTracking().ToListAsync();
         }
 
-        [HttpGet("{id:int}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Item))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Item>> GetItemById(int id)
+        // GET: api/v1/items/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Item>> GetItem(int id)
         {
             var item = await _context.Items.FindAsync(id);
-
-            if (item == null)
-            {
-                return NotFound(new { error = "ResourceNotFound", message = $"Товар з ID {id} не знайдено." });
-            }
-
-            return Ok(item);
+            if (item == null) return NotFound();
+            return item;
         }
 
+        // POST: api/v1/items
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Item))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<Item>> CreateItem([FromBody] Item item)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -64,20 +41,14 @@ namespace ServerApp.Controllers.Api
             _context.Items.Add(item);
             await _context.SaveChangesAsync();
 
-            // Виправлено: item.Id замість застарілого item.ID
-            return CreatedAtAction(nameof(GetItemById), new { id = item.Id }, item);
+            return CreatedAtAction(nameof(GetItem), new { id = item.Id }, item);
         }
 
-        [HttpPut("{id:int}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Item))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Item>> UpdateItem(int id, [FromBody] Item item)
+        // PUT: api/v1/items/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateItem(int id, [FromBody] Item item)
         {
-            if (id != item.Id)
-            {
-                return BadRequest(new { error = "MismatchedId", message = "ID у маршруті та у тілі запиту не збігаються." });
-            }
+            if (id != item.Id) return BadRequest();
 
             _context.Entry(item).State = EntityState.Modified;
 
@@ -87,26 +58,19 @@ namespace ServerApp.Controllers.Api
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.Items.Any(e => e.Id == id))
-                {
-                    return NotFound(new { error = "ResourceNotFound", message = $"Товар з ID {id} не знайдено." });
-                }
+                if (!_context.Items.Any(e => e.Id == id)) return NotFound();
                 throw;
             }
 
-            return Ok(item);
+            return NoContent();
         }
 
-        [HttpDelete("{id:int}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        // DELETE: api/v1/items/5
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteItem(int id)
         {
             var item = await _context.Items.FindAsync(id);
-            if (item == null)
-            {
-                return NotFound(new { error = "ResourceNotFound", message = $"Товар з ID {id} не знайдено." });
-            }
+            if (item == null) return NotFound();
 
             _context.Items.Remove(item);
             await _context.SaveChangesAsync();
