@@ -6,7 +6,7 @@ using ServerApp.Models;
 namespace ServerApp.Controllers
 {
     [Authorize(Roles = "Admin")]
-    [ApiExplorerSettings(IgnoreApi = true)] // 👈 Приховує блок Admin зі Swagger
+    [ApiExplorerSettings(IgnoreApi = true)] // Приховує Controller зі Swagger
     public class AdminController : Controller
     {
         private readonly AppDbContext _context;
@@ -16,11 +16,31 @@ namespace ServerApp.Controllers
             _context = context;
         }
 
-        // GET: Admin
+        // GET: Admin або Users (Головна сторінка управління)
+        [HttpGet]
+        [Route("Admin")]
+        [Route("Admin/Index")]
+        [Route("Users")]
         public async Task<IActionResult> Index()
         {
             var items = await _context.Items.AsNoTracking().ToListAsync();
             return View(items);
+        }
+
+        // GET: UserActions або Admin/UserActions (Журнал операцій)
+        [HttpGet]
+        [Route("UserActions")]
+        [Route("Admin/UserActions")]
+        public async Task<IActionResult> UserActions()
+        {
+            var actions = await _context.UserActions
+                .Include(a => a.Worker)
+                .Include(a => a.Item)
+                .OrderByDescending(a => a.ActionDate)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return View(actions);
         }
 
         // GET: Admin/CreateProduct або Admin/Create
@@ -32,12 +52,14 @@ namespace ServerApp.Controllers
         }
 
         // GET: Admin/Edit/1
+        [HttpGet("Admin/Edit/{id}")]
         public IActionResult Edit(int id)
         {
             return RedirectToAction("Edit", "Items", new { id });
         }
 
         // GET: Admin/Delete/1
+        [HttpGet("Admin/Delete/{id}")]
         public IActionResult Delete(int id)
         {
             return RedirectToAction("Delete", "Items", new { id });
