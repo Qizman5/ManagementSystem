@@ -7,7 +7,8 @@ namespace ServerApp.Controllers.Api
 {
     [ApiController]
     [Route("api/v1/actions")]
-    [AllowAnonymous] // Дозволяємо запити від мобільного застосунку
+    [AllowAnonymous]
+    [ApiExplorerSettings(IgnoreApi = true)] // 👈 Приховує з Swagger
     public class ActionsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -25,7 +26,6 @@ namespace ServerApp.Controllers.Api
                 return BadRequest(new { message = "Некоректні дані товару." });
             }
 
-            // 1. Шукаємо товар за назвою або створюємо новий
             var item = await _context.Items.FirstOrDefaultAsync(i => i.Name == dto.ItemName);
 
             if (item == null)
@@ -42,7 +42,6 @@ namespace ServerApp.Controllers.Api
             }
             else
             {
-                // Оновлюємо кількість залежно від типу операції
                 if (dto.ActionType == "Income" || dto.ActionType == "Прихід")
                 {
                     item.Quantity += dto.Quantity;
@@ -54,14 +53,12 @@ namespace ServerApp.Controllers.Api
                 _context.Items.Update(item);
             }
 
-            // 2. Отримуємо першого доступного працівника для запису
             var worker = await _context.Workers.FirstOrDefaultAsync();
             if (worker == null)
             {
                 return BadRequest(new { message = "У системі відсутні зареєстровані працівники." });
             }
 
-            // 3. Фіксуємо операцію в історії
             var action = new UserAction
             {
                 WorkerId = worker.Id,

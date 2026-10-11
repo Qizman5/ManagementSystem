@@ -10,6 +10,7 @@ namespace ServerApp.Controllers.API
 {
     [ApiController]
     [Route("api/[controller]")]
+    [ApiExplorerSettings(IgnoreApi = true)] // 👈 Приховує з Swagger
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -27,7 +28,6 @@ namespace ServerApp.Controllers.API
             if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
                 return BadRequest("Необхідно вказати Email та Password.");
 
-            // Шукаємо серед Workers замість застарілого User
             Worker? worker = await _context.Workers
                 .FirstOrDefaultAsync(w => w.Email == dto.Email || w.Username == dto.Email);
 
@@ -65,7 +65,7 @@ namespace ServerApp.Controllers.API
         private string GenerateJwtToken(Worker worker)
         {
             var jwtSettings = _configuration.GetSection("Jwt");
-            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? "SuperSecretKeyForWmsSystem2026Secure!");
+            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? "SuperSecretKeyForJWTTokenGeneration2026!");
 
             var claims = new[]
             {

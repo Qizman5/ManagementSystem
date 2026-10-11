@@ -22,6 +22,14 @@ namespace ServerApp.Controllers
             return View(items);
         }
 
+        // GET: Admin/CreateProduct або Admin/Create
+        [HttpGet("Admin/CreateProduct")]
+        [HttpGet("Admin/Create")]
+        public IActionResult CreateProduct()
+        {
+            return RedirectToAction("Create", "Items");
+        }
+
         // GET: Admin/Edit/1
         public IActionResult Edit(int id)
         {
