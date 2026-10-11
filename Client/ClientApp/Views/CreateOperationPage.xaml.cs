@@ -16,6 +16,7 @@ namespace ClientApp.Views
             _apiService = new ApiService();
         }
 
+        // 1. Валідатор для введення лише цифр у полі кількості
         private void OnNumericEntryTextChanged(object sender, TextChangedEventArgs e)
         {
             try
@@ -45,6 +46,7 @@ namespace ClientApp.Views
             }
         }
 
+        // 2. Обробка натискання кнопки «Зберегти операцію»
         private async void OnSaveOperationClicked(object sender, EventArgs e)
         {
             var itemName = ItemNameEntry.Text?.Trim();
@@ -69,13 +71,14 @@ namespace ClientApp.Views
 
             try
             {
+                // Визначаємо тип операції відповідно до обраного варіанта в Picker
                 string selectedType = OperationTypePicker.SelectedItem?.ToString() ?? "Income";
-                string actionType = selectedType.Contains("Витрата") ? "Expense" :
+                string actionType = selectedType.Contains("Списання") || selectedType.Contains("Витрата") ? "Outcome" :
                                     selectedType.Contains("Переміщення") ? "Transfer" : "Income";
 
                 var dto = new UserActionDto
                 {
-                    UserId = 3,
+                    UserId = 1,
                     ItemId = 0,
                     ItemName = itemName,
                     Quantity = quantity,
@@ -83,21 +86,30 @@ namespace ClientApp.Views
                     Note = NoteEntry.Text?.Trim() ?? string.Empty
                 };
 
+                // Відправляємо дані на сервер через ApiService
                 var (success, message) = await _apiService.CreateActionAsync(dto);
 
                 if (success)
                 {
-                    await DisplayAlert("Успіх", message, "OK");
+                    await DisplayAlert("Успіх", string.IsNullOrWhiteSpace(message) ? "Операцію успішно збережено!" : message, "OK");
+
+                    // Очищаємо поля після створення
+                    ItemNameEntry.Text = string.Empty;
+                    QuantityEntry.Text = string.Empty;
+                    NoteEntry.Text = string.Empty;
+                    OperationTypePicker.SelectedIndex = -1;
+
+                    // Переходимо до списку товарів
                     await Shell.Current.GoToAsync("//ItemsPage");
                 }
                 else
                 {
-                    await DisplayAlert("Помилка", message, "OK");
+                    await DisplayAlert("Помилка", string.IsNullOrWhiteSpace(message) ? "Сервер відхилив операцію." : message, "OK");
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Помилка", $"Виникла помилка: {ex.Message}", "OK");
+                await DisplayAlert("Помилка мережі", $"Не вдалося з'єднатися з сервером: {ex.Message}", "OK");
             }
         }
     }

@@ -2,13 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServerApp.Models;
-using System.Text.Json.Serialization;
 
 namespace ServerApp.Controllers.Api
 {
     [ApiController]
     [Route("api/v1/actions")]
-    [AllowAnonymous] // Дозволяємо мобільному клієнту надсилати операції без обов'язкового токена
+    [Route("api/actions")] // Додатковий маршрут про всяк випадок
+    [AllowAnonymous]
     [ApiExplorerSettings(IgnoreApi = true)]
     public class ActionsController : ControllerBase
     {
@@ -20,92 +20,100 @@ namespace ServerApp.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateAction([FromBody] ActionDto dto)
+        public async Task<IActionResult> CreateAction([FromBody] IDictionary<string, object>? rawData)
         {
-            // Отримуємо назву товару з будь-якого з можливих полів DTO
-            var rawItemName = dto?.ItemName ?? dto?.ProductName ?? dto?.Name ?? dto?.Title;
-
-            if (dto == null || string.IsNullOrWhiteSpace(rawItemName))
+            if (rawData == null)
             {
-                return BadRequest(new { success = false, message = "Вкажіть назву товару." });
+                return BadRequest(new { message = "Порожні дані запиту." });
             }
 
-            var cleanName = rawItemName.Trim();
+            // Зчитуємо назву товару з будь-якого можливого ключа JSON
+            string itemName = string.Empty;
+            foreach (var key in new[] { "itemName", "ItemName", "productName", "Name", "name", "title" })
+            {
+                if (rawData.TryGetValue(key, out var val) && val != null)
+                {
+                    itemName = val.ToString() ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(itemName)) break;
+                }
+            }
 
-            // 1. Шукаємо товар за назвою або створюємо новий у БД
-            var item = await _context.Items.FirstOrDefaultAsync(i => i.Name.ToLower() == cleanName.ToLower());
+            if (string.IsNullOrWhiteSpace(itemName))
+            {
+                return BadRequest(new { message = "Не вказано назву товару." });
+            }
+
+            // Зчитуємо кількість
+            int quantity = 1;
+            foreach (var key in new[] { "quantity", "Quantity", "qty" })
+            {
+                if (rawData.TryGetValue(key, out var val) && val != null)
+                {
+                    int.TryParse(val.ToString(), out quantity);
+                    break;
+                }
+            }
+
+            // Зчитуємо примітку
+            string? note = null;
+            if (rawData.TryGetValue("note", out var noteVal) || rawData.TryGetValue("Note", out noteVal))
+            {
+                note = noteVal?.ToString();
+            }
+
+            // 1. Пошук або створення товару у базі MySQL
+            var item = await _context.Items.FirstOrDefaultAsync(i => i.Name.ToLower() == itemName.Trim().ToLower());
 
             if (item == null)
             {
                 item = new Item
                 {
-                    Name = cleanName,
-                    Quantity = dto.Quantity > 0 ? dto.Quantity : 1,
+                    Name = itemName.Trim(),
+                    Quantity = quantity > 0 ? quantity : 1,
                     Price = 100.00m,
                     Discount = 0.00m
                 };
                 _context.Items.Add(item);
-                await _context.SaveChangesAsync(); // 👈 Новий товар додається в MySQL!
+                await _context.SaveChangesAsync();
             }
             else
             {
-                var actionTypeLower = (dto.ActionType ?? "").Trim().ToLower();
-
-                // Якщо це прихід або переміщення — збільшуємо кількість
-                if (actionTypeLower.Contains("income") || actionTypeLower.Contains("прихід") || actionTypeLower.Contains("transfer"))
-                {
-                    item.Quantity += dto.Quantity;
-                }
-                else if (actionTypeLower.Contains("outcome") || actionTypeLower.Contains("списання"))
-                {
-                    item.Quantity = Math.Max(0, item.Quantity - dto.Quantity);
-                }
+                item.Quantity += quantity;
                 _context.Items.Update(item);
             }
 
-            // 2. Отримуємо працівника для логування
-            var worker = await _context.Workers.FirstOrDefaultAsync() ?? new Worker { Name = "System Admin", Email = "admin@wms.com", PasswordHash = "0000" };
+            // 2. Отримання або створення дефолтного працівника
+            var worker = await _context.Workers.FirstOrDefaultAsync();
+            if (worker == null)
+            {
+                worker = new Worker
+                {
+                    Name = "System Admin",
+                    Username = "admin",
+                    Email = "admin@wms.com",
+                    PasswordHash = "0000",
+                    Role = "Admin"
+                };
+                _context.Workers.Add(worker);
+                await _context.SaveChangesAsync();
+            }
 
-            // 3. Записуємо операцію в журнал UserActions
-            var action = new UserAction
+            // 3. Запис у журнал операцій
+            var userAction = new UserAction
             {
                 WorkerId = worker.Id,
                 ProductId = item.Id,
-                ActionType = string.IsNullOrWhiteSpace(dto.ActionType) ? "Transfer" : dto.ActionType,
-                Quantity = dto.Quantity,
+                ActionType = "Transfer",
+                Quantity = quantity,
                 PriceAtMoment = item.Price,
-                Note = dto.Note,
+                Note = note,
                 ActionDate = DateTime.Now
             };
 
-            _context.UserActions.Add(action);
+            _context.UserActions.Add(userAction);
             await _context.SaveChangesAsync();
 
-            return Ok(new { success = true, message = "Операцію успішно збережено в базі даних!" });
+            return Ok(new { success = true, message = "Операцію збережено!" });
         }
-    }
-
-    public class ActionDto
-    {
-        [JsonPropertyName("itemName")]
-        public string? ItemName { get; set; }
-
-        [JsonPropertyName("productName")]
-        public string? ProductName { get; set; }
-
-        [JsonPropertyName("name")]
-        public string? Name { get; set; }
-
-        [JsonPropertyName("title")]
-        public string? Title { get; set; }
-
-        [JsonPropertyName("actionType")]
-        public string? ActionType { get; set; }
-
-        [JsonPropertyName("quantity")]
-        public int Quantity { get; set; }
-
-        [JsonPropertyName("note")]
-        public string? Note { get; set; }
     }
 }

@@ -14,7 +14,7 @@ namespace ClientApp.Services
     {
         private readonly HttpClient _httpClient;
 
-        // Автоматично вибирає 10.0.2.2 для Android-емулятора та localhost для Windows/iOS
+        // Динамічний вибір IP залежно від платформи (Android Emulator vs Windows/iOS)
         public static string BaseUrl = DeviceInfo.Platform == DevicePlatform.Android
             ? "http://10.0.2.2:5024/"
             : "http://localhost:5024/";
@@ -47,13 +47,13 @@ namespace ClientApp.Services
         }
 
         /// <summary>
-        /// Авторизація користувача та збереження токена
+        /// Авторизація користувача та збереження JWT-токена
         /// </summary>
-        public async Task<bool> LoginAsync(string username, string password)
+        public async Task<bool> LoginAsync(string email, string password)
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/auth/login", new { username, password });
+                var response = await _httpClient.PostAsJsonAsync("api/auth/login", new { email, password });
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -75,14 +75,14 @@ namespace ClientApp.Services
         }
 
         /// <summary>
-        /// Отримання списку товарів (GET api/items)
+        /// Отримання списку товарів (GET api/v1/items)
         /// </summary>
         public async Task<List<ItemDto>?> GetItemsAsync()
         {
             try
             {
                 await AddAuthHeaderAsync();
-                return await _httpClient.GetFromJsonAsync<List<ItemDto>>("api/items");
+                return await _httpClient.GetFromJsonAsync<List<ItemDto>>("api/v1/items");
             }
             catch (Exception ex)
             {
@@ -92,23 +92,34 @@ namespace ClientApp.Services
         }
 
         /// <summary>
-        /// Створення складської операції (POST api/actions) з поверненням детального повідомлення
+        /// Створення складської операції (POST api/v1/actions)
         /// </summary>
         public async Task<(bool Success, string Message)> CreateActionAsync(UserActionDto dto)
         {
             try
             {
                 await AddAuthHeaderAsync();
-                var response = await _httpClient.PostAsJsonAsync("api/actions", dto);
+
+                // Формуємо payload з однаковими іменами для зчитування на сервері
+                var payload = new
+                {
+                    itemName = dto.ItemName,
+                    actionType = dto.ActionType,
+                    quantity = dto.Quantity,
+                    note = dto.Note
+                };
+
+                var response = await _httpClient.PostAsJsonAsync("api/v1/actions", payload);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return (true, "Операцію успішно збережено!");
+                    return (true, "Операцію успішно збережено у базі даних!");
                 }
 
-                // Зчитуємо точний текст помилки від сервера
                 string errorResponse = await response.Content.ReadAsStringAsync();
-                return (false, string.IsNullOrWhiteSpace(errorResponse) ? "Сервер відхилив операцію." : errorResponse);
+                return (false, string.IsNullOrWhiteSpace(errorResponse) 
+                    ? $"Сервер повернув код {response.StatusCode}." 
+                    : errorResponse);
             }
             catch (Exception ex)
             {
@@ -118,7 +129,7 @@ namespace ClientApp.Services
         }
 
         /// <summary>
-        /// Вихід із системи (видалення збереженого токена)
+        /// Вихід із системи (видалення токена)
         /// </summary>
         public void Logout()
         {
