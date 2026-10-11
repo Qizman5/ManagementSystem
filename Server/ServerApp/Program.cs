@@ -6,59 +6,19 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using ServerApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Додаємо підтримку MVC (Контролери + Razor Views)
+// 1. Додавання підтримки MVC (Controllers + Views)
 builder.Services.AddControllersWithViews();
 
-// 2. Додаємо Swagger з підтримкою JWT-авторизації та чистою назвою "Warehouse"
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    // Заголовок Warehouse без версії
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Warehouse", Version = null });
-
-    // Унікальні Schema ID (для уникнення дублів типів)
-    options.CustomSchemaIds(type => type.FullName);
-
-    // Автоматичне вирішення конфліктів дій
-    options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
-
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Введіть JWT токен у форматі: Bearer {your_token}"
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
-
-// 3. Підключення до бази даних MySQL (Pomelo)
+// 2. Підключення до бази даних MySQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// 4. Конфігурація Rate Limiting
+// 3. Rate Limiting
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -69,22 +29,15 @@ builder.Services.AddRateLimiter(options =>
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
-                PermitLimit = 30,
+                PermitLimit = 100,
                 QueueLimit = 0,
                 Window = TimeSpan.FromMinutes(1)
             }
         )
     );
-
-    options.AddFixedWindowLimiter("StrictPolicy", opt =>
-    {
-        opt.PermitLimit = 10;
-        opt.Window = TimeSpan.FromSeconds(10);
-        opt.QueueLimit = 0;
-    });
 });
 
-// 5. Підтримка Cloudflare / Forwarded Headers
+// 4. Проксі-заголовки
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -92,12 +45,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// 6. Зчитування конфігурації JWT
+// 5. Конфігурація JWT та Cookie
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKeyForJWTTokenGeneration2026!";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ServerApp";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ServerAppUsers";
 
-// 7. Налаштування Гібридної Аутентифікації (Cookie + JWT)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -106,29 +58,10 @@ builder.Services.AddAuthentication(options =>
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
     options.Cookie.Name = "WarehouseAuthCookie";
-    options.LoginPath = "/Account/Register";
+    options.LoginPath = "/Account/Login"; // 👈 Сторінка входу для незареєстрованих
     options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/Register";
-
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-
+    options.AccessDeniedPath = "/Account/Login";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
-    options.SlidingExpiration = true;
-
-    options.Events.OnRedirectToLogin = context =>
-    {
-        if (context.Request.Path.StartsWithSegments("/api") ||
-            context.Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
-            context.Request.Headers["Accept"].ToString().Contains("application/json"))
-        {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            return Task.CompletedTask;
-        }
-        context.Response.Redirect(context.RedirectUri);
-        return Task.CompletedTask;
-    };
 })
 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
 {
@@ -145,7 +78,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// 8. Політика авторизації
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("BearerOrCookie", policy =>
@@ -160,16 +92,15 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-// 9. Проксі-заголовки
 app.UseForwardedHeaders();
 
+// Ініціалізація БД
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
     dbContext.Database.EnsureCreated();
 
-    if (!dbContext.Workers.Any())
+    if (!dbContext.Workers.Any(w => w.Role == "Admin"))
     {
         dbContext.Workers.Add(new Worker
         {
@@ -177,37 +108,11 @@ using (var scope = app.Services.CreateScope())
             Username = "admin",
             FullName = "System Admin",
             Email = "arotar2005@gmail.com",
-            PasswordHash = "0000",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("0000"),
             Role = "Admin"
         });
         dbContext.SaveChanges();
     }
-}
-
-
-// 11. Активація Swagger UI
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse");
-        c.DocumentTitle = "Warehouse";
-        c.RoutePrefix = "swagger";
-        c.EnablePersistAuthorization();
-        c.DefaultModelsExpandDepth(-1);
-
-        c.HeadContent = @"
-            <style>
-                .swagger-ui .info .base-url,
-                .swagger-ui .info .url,
-                .swagger-ui .info .title small,
-                .swagger-ui .info .version,
-                .swagger-ui .info .version-stamp {
-                    display: none !important;
-                }
-            </style>";
-    });
 }
 
 if (!app.Environment.IsDevelopment())
@@ -218,26 +123,20 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseRateLimiter();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 12. Перенаправлення з /api на /Admin/Index
-app.MapGet("/api", context => {
-    context.Response.Redirect("/Admin/Index");
-    return Task.CompletedTask;
-});
+// 🛑 Перенаправлення з адрес Swagger на сторінку Входу/Реєстрації
+app.MapGet("/swagger", context => { context.Response.Redirect("/Account/Login"); return Task.CompletedTask; });
+app.MapGet("/swagger/index.html", context => { context.Response.Redirect("/Account/Login"); return Task.CompletedTask; });
 
-// 13. Маршрутизація контролерів
+// 🎯 Дефолтна маршрутизація веде на сторінку Входу
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Admin}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.MapControllers();
 
-// 14. Запуск додатка
 app.Run();

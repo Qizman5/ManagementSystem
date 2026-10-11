@@ -1,4 +1,6 @@
+using System;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 
 namespace ClientApp.Views
 {
@@ -9,13 +11,16 @@ namespace ClientApp.Views
             InitializeComponent();
         }
 
-        private async void OnLogoutClicked(object sender, EventArgs e)
+        private void OnLogoutClicked(object sender, EventArgs e)
         {
-            // Очищаємо збережений токен авторизації
+            // Очищаємо токен авторизації
             Preferences.Remove("AuthToken");
-            
-            // Перенаправляємо на сторінку входу
-            Application.Current.MainPage = new NavigationPage(new LoginPage());
+
+            // Безпечна зміна головної сторінки з перевіркою на null
+            if (Application.Current != null)
+            {
+                Application.Current.MainPage = new NavigationPage(new LoginPage());
+            }
         }
     }
 }
