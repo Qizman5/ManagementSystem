@@ -16,18 +16,26 @@ namespace ServerApp.Controllers
             _context = context;
         }
 
-        // GET: Admin або Users (Головна сторінка управління)
+        // GET: Admin (Головна сторінка управління)
         [HttpGet]
         [Route("Admin")]
         [Route("Admin/Index")]
-        [Route("Users")]
         public async Task<IActionResult> Index()
         {
             var items = await _context.Items.AsNoTracking().ToListAsync();
             return View(items);
         }
 
-        // GET: UserActions або Admin/UserActions (Перенаправлення на існуючий UserActionsController)
+        // GET: Users або Admin/Users (Перенаправлення на контролер працівників)
+        [HttpGet]
+        [Route("Users")]
+        [Route("Admin/Users")]
+        public IActionResult Users()
+        {
+            return RedirectToAction("Index", "Workers");
+        }
+
+        // GET: UserActions або Admin/UserActions (Перенаправлення на контролер дій)
         [HttpGet]
         [Route("UserActions")]
         [Route("Admin/UserActions")]

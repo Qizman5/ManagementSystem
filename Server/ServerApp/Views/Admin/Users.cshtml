@@ -1,0 +1,43 @@
+@model IEnumerable<ServerApp.Models.Worker>
+@{
+    ViewData["Title"] = "Список користувачів";
+}
+
+<div class="container mt-4">
+    <h2>Управління користувачами</h2>
+
+    <table class="table table-striped table-bordered mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Ім'я</th>
+                <th>Email / Username</th>
+                <th>Роль</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var worker in Model)
+                {
+                    <tr>
+                        <td>@worker.Id</td>
+                        <td>@(worker.Name ?? "—")</td>
+                        <td>@(worker.Email ?? worker.Username ?? "—")</td>
+                        <td>
+                            <span class="badge @(worker.Role == "Admin" ? "bg-danger" : "bg-primary")">
+                                @(worker.Role ?? "User")
+                            </span>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-muted">Користувачів не знайдено</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
