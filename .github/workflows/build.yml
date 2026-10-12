@@ -19,9 +19,19 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    # 1. Встановлюємо MAUI workloads для збірки клієнта
+    - name: Install MAUI Workload
+      run: dotnet workload install maui
+
+    # 2. Відновлюємо залежності рішення
     - name: Restore dependencies
       run: dotnet restore WarehouseManagementSystem.sln
 
-    - name: Build project
-      run: dotnet build WarehouseManagementSystem.sln --no-restore --configuration Release
+    # 3. Збірка Сервера (Backend)
+    - name: Build Server
+      run: dotnet build Server/ServerApp/ServerApp.csproj --no-restore --configuration Release
+
+    # 4. Збірка Клієнта (MAUI Windows/Android)
+    - name: Build Client (MAUI)
+      run: dotnet build Client/ClientApp/ClientApp.csproj --no-restore --configuration Release -f net8.0-windows10.0.19041.0
       
