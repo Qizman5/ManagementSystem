@@ -17,11 +17,11 @@ namespace ClientApp.Views
         {
             base.OnAppearing();
 
-            // 1. Отримуємо email поточного користувача
+            // 1. Перевірка ролі поточного користувача
             string? userEmail = await SecureStorage.Default.GetAsync("user_email");
             bool isAdmin = string.Equals(userEmail, "arotar2005@gmail.com", StringComparison.OrdinalIgnoreCase);
 
-            // 2. Видаляємо всі існуючі кнопки "Адмінка" з колекції (щоб уникнути дублювання)
+            // 2. Видаляємо дублікати кнопки "Адмінка"
             for (int i = ToolbarItems.Count - 1; i >= 0; i--)
             {
                 if (ToolbarItems[i].Text != null && ToolbarItems[i].Text.Contains("Адмінка"))
@@ -30,7 +30,7 @@ namespace ClientApp.Views
                 }
             }
 
-            // 3. Динамічно додаємо кнопку "Адмінка" ТІЛЬКИ якщо користувач — arotar2005@gmail.com
+            // 3. Додаємо кнопку "Адмінка" тільки для адміністратора
             if (isAdmin)
             {
                 ToolbarItems.Insert(0, new ToolbarItem
@@ -41,6 +41,19 @@ namespace ClientApp.Views
                 });
             }
 
+            // 4. Автоматичне завантаження товарів при відкритті сторінки
+            if (BindingContext is ItemsViewModel vm)
+            {
+                if (vm.LoadItemsCommand != null && vm.LoadItemsCommand.CanExecute(null))
+                {
+                    await vm.LoadItemsCommand.ExecuteAsync(null);
+                }
+            }
+        }
+
+        // Обробник натискання кнопки "🔄 Оновити список"
+        private async void OnRefreshClicked(object sender, EventArgs e)
+        {
             if (BindingContext is ItemsViewModel vm)
             {
                 if (vm.LoadItemsCommand != null && vm.LoadItemsCommand.CanExecute(null))

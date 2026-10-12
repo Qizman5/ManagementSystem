@@ -6,7 +6,7 @@
              Title="Список товарів"
              BackgroundColor="#F4F5F9">
 
-    <!-- Кнопка Вийти у верхньому правому кутку (Кнопка Адмінки додається автоматично через C# для адміна) -->
+    <!-- Кнопка Вийти у верхньому правому кутку -->
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="🚪 Вийти" Clicked="OnLogoutClicked" Priority="1" />
     </ContentPage.ToolbarItems>
@@ -23,17 +23,17 @@
         <!-- Кнопка Оновити список зверху -->
         <Button Grid.Row="1" 
                 Text="🔄 Оновити список" 
-                Command="{Binding LoadItemsCommand}" 
+                Clicked="OnRefreshClicked" 
                 BackgroundColor="#E8EAF6" 
                 TextColor="#3F51B5" 
                 FontAttributes="Bold" 
                 CornerRadius="8" 
                 HeightRequest="40" />
 
-        <!-- Список товарів -->
+        <!-- Список товарів із свайпом для оновлення (Pull-to-refresh) -->
         <RefreshView Grid.Row="2" 
-                     IsRefreshing="{Binding IsBusy}" 
-                     Command="{Binding LoadItemsCommand}">
+                     IsRefreshing="{Binding IsRefreshing}" 
+                     Command="{Binding RefreshCommand}">
             
             <CollectionView ItemsSource="{Binding Items}" 
                             EmptyView="Товари відсутні або завантажуються...">
@@ -64,7 +64,7 @@
                                 </Frame>
 
                                 <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
-                                       Text="Тип операції: Прихід (Прибуття)" 
+                                       Text="{Binding Description, StringFormat='Тип операції: {0}'}" 
                                        TextColor="#1565C0" 
                                        FontSize="12" />
                             </Grid>

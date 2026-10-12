@@ -6,7 +6,7 @@ using ServerApp.Models;
 namespace ServerApp.Controllers
 {
     [Authorize(Roles = "Admin")]
-    [ApiExplorerSettings(IgnoreApi = true)] // Приховує Controller зі Swagger
+    [ApiExplorerSettings(IgnoreApi = true)]
     public class AdminController : Controller
     {
         private readonly AppDbContext _context;
@@ -16,7 +16,7 @@ namespace ServerApp.Controllers
             _context = context;
         }
 
-        // GET: Admin (Головна сторінка управління)
+        // GET: Admin або Admin/Index (Товари)
         [HttpGet]
         [Route("Admin")]
         [Route("Admin/Index")]
@@ -26,25 +26,32 @@ namespace ServerApp.Controllers
             return View(items);
         }
 
-        // GET: Users або Admin/Users (Перенаправлення на контролер працівників)
+        // GET: Users або Admin/Users (Користувачі)
         [HttpGet]
         [Route("Users")]
         [Route("Admin/Users")]
-        public IActionResult Users()
+        public async Task<IActionResult> Users()
         {
-            return RedirectToAction("Index", "Workers");
+            var workers = await _context.Workers.AsNoTracking().ToListAsync();
+            return View(workers); // Повертає Views/Admin/Users.cshtml
         }
 
-        // GET: UserActions або Admin/UserActions (Перенаправлення на контролер дій)
+        // GET: UserActions або Admin/UserActions (Журнал дій)
         [HttpGet]
         [Route("UserActions")]
         [Route("Admin/UserActions")]
-        public IActionResult UserActions()
+        public async Task<IActionResult> UserActions()
         {
-            return RedirectToAction("Index", "UserActions");
+            var actions = await _context.UserActions
+                .Include(a => a.Worker)
+                .Include(a => a.Item)
+                .OrderByDescending(a => a.ActionDate)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return View(actions); // Повертає Views/Admin/UserActions.cshtml
         }
 
-        // GET: Admin/CreateProduct або Admin/Create
         [HttpGet("Admin/CreateProduct")]
         [HttpGet("Admin/Create")]
         public IActionResult CreateProduct()
@@ -52,14 +59,12 @@ namespace ServerApp.Controllers
             return RedirectToAction("Create", "Items");
         }
 
-        // GET: Admin/Edit/1
         [HttpGet("Admin/Edit/{id}")]
         public IActionResult Edit(int id)
         {
             return RedirectToAction("Edit", "Items", new { id });
         }
 
-        // GET: Admin/Delete/1
         [HttpGet("Admin/Delete/{id}")]
         public IActionResult Delete(int id)
         {

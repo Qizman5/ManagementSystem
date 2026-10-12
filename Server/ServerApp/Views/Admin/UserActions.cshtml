@@ -1,6 +1,6 @@
 @model IEnumerable<ServerApp.Models.UserAction>
 @{
-    ViewData["Title"] = "Журнал операцій";
+    ViewData["Title"] = "Журнал дій";
 }
 
 <div class="container mt-4">
@@ -18,7 +18,7 @@
         <tbody>
             @if (Model != null && Model.Any())
             {
-                @foreach (var item in Model)
+                foreach (var item in Model)
                 {
                     <tr>
                         <td>@item.Id</td>

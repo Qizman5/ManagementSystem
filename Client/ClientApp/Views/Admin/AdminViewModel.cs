@@ -7,6 +7,7 @@ namespace ClientApp.ViewModels
 {
     public partial class AdminViewModel : ObservableObject
     {
+        
         [ObservableProperty]
         private ObservableCollection<Item> _items = new();
 
