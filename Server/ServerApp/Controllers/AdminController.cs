@@ -27,20 +27,13 @@ namespace ServerApp.Controllers
             return View(items);
         }
 
-        // GET: UserActions або Admin/UserActions (Журнал операцій)
+        // GET: UserActions або Admin/UserActions (Перенаправлення на існуючий UserActionsController)
         [HttpGet]
         [Route("UserActions")]
         [Route("Admin/UserActions")]
-        public async Task<IActionResult> UserActions()
+        public IActionResult UserActions()
         {
-            var actions = await _context.UserActions
-                .Include(a => a.Worker)
-                .Include(a => a.Item)
-                .OrderByDescending(a => a.ActionDate)
-                .AsNoTracking()
-                .ToListAsync();
-
-            return View(actions);
+            return RedirectToAction("Index", "UserActions");
         }
 
         // GET: Admin/CreateProduct або Admin/Create
