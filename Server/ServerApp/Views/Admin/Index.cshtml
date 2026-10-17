@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Панель Управління складом";
     Layout = null;
+    int index = 1; // Початковий номер для порядкової нумерації товарів
 }
 
 <!DOCTYPE html>
@@ -225,7 +226,6 @@
                         </div>
                         <p class="text-secondary small mb-3">Швидкий доступ до баз даних, списку користувачів та операційних логів.</p>
                         <div class="d-flex flex-wrap gap-2">
-                            <!-- Працюючі кнопки-посилання -->
                             <a href="/Users" class="btn btn-sm btn-outline-primary rounded-pill px-3">
                                 <i class="bi bi-people me-1"></i> Користувачі
                             </a>
@@ -263,7 +263,8 @@
                                         @foreach (var item in Model)
                                         {
                                             <tr>
-                                                <td class="text-secondary">#@item.Id</td>
+                                                <!-- Порядковий номер #1, #2, #3 замість сталого ID -->
+                                                <td class="text-secondary fw-bold">#@(index++)</td>
                                                 <td class="fw-semibold">@item.Name</td>
                                                 <td>@item.Quantity шт.</td>
                                                 <td>@item.Price.ToString("N2") ₴</td>
@@ -279,6 +280,7 @@
                                                 </td>
                                                 <td class="text-success fw-bold">@item.FinalPrice.ToString("N2") ₴</td>
                                                 <td class="text-end">
+                                                    <!-- Кнопки дій використовують реальний ID товару для БД -->
                                                     <a href="/Admin/Edit/@item.Id" class="btn btn-sm btn-outline-warning me-1"><i class="bi bi-pencil"></i></a>
                                                     <a href="/Admin/Delete/@item.Id" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
                                                 </td>
