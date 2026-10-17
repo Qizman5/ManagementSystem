@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -45,7 +46,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// 5. Конфігурація JWT та Cookie
+// 5. Конфігурація JWT та Cookie (ЄДИНИЙ ЛАНЦЮЖОК АВТЕНТИФІКАЦІЇ)
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKeyForJWTTokenGeneration2026!";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ServerApp";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ServerAppUsers";
@@ -54,13 +55,14 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
     options.Cookie.Name = "WarehouseAuthCookie";
-    options.LoginPath = "/Account/Login"; // 👈 Сторінка входу для незареєстрованих
+    options.LoginPath = "/Account/Login";              // Сторінка входу для незареєстрованих
     options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied"; // 👈 Автоматичне перенаправлення, якщо немає прав Admin
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
 })
 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -94,7 +96,7 @@ var app = builder.Build();
 
 app.UseForwardedHeaders();
 
-// Ініціалізація БД
+// Ініціалізація БД та створення Admin за замовчуванням
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -125,14 +127,15 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🛑 Перенаправлення з адрес Swagger на сторінку Входу/Реєстрації
+// 🛑 Перенаправлення з адрес Swagger на сторінку Входу
 app.MapGet("/swagger", context => { context.Response.Redirect("/Account/Login"); return Task.CompletedTask; });
 app.MapGet("/swagger/index.html", context => { context.Response.Redirect("/Account/Login"); return Task.CompletedTask; });
 
-// 🎯 Дефолтна маршрутизація веде на сторінку Входу
+// 🎯 Дефолтна маршрутизація
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");

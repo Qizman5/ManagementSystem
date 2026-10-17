@@ -21,6 +21,7 @@ namespace ServerApp.Controllers
             _context = context;
         }
 
+        // GET: /Account/Login
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Login(string? returnUrl = null)
@@ -29,6 +30,7 @@ namespace ServerApp.Controllers
             return View();
         }
 
+        // POST: /Account/Login
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -49,7 +51,7 @@ namespace ServerApp.Controllers
                 return View(model);
             }
 
-            // 1. Вхід адміністратора
+            // 1. Резервний вхід головного системного адміністратора
             if ((inputLogin == "admin" || inputLogin == "arotar2005@gmail.com") && (inputPassword == "0000" || inputPassword == "Admin123!"))
             {
                 await AuthenticateUser(1, "arotar2005@gmail.com", "Admin");
@@ -60,7 +62,7 @@ namespace ServerApp.Controllers
                 return RedirectToAction("Index", "Admin");
             }
 
-            // 2. Вхід працівника (Worker)
+            // 2. Вхід користувачів із бази даних MySQL
             var worker = await _context.Workers
                 .FirstOrDefaultAsync(w => w.Username == inputLogin || w.Email == inputLogin);
 
@@ -86,24 +88,26 @@ namespace ServerApp.Controllers
                 return View(model);
             }
 
-            string usernameToUse = !string.IsNullOrEmpty(worker.Username) ? worker.Username : worker.Name;
+            string usernameToUse = !string.IsNullOrEmpty(worker.Name) ? worker.Name : (!string.IsNullOrEmpty(worker.Username) ? worker.Username : worker.Email);
             string userRole = !string.IsNullOrEmpty(worker.Role) ? worker.Role : "Worker";
 
+            // Створення сесії Cookie із записом відповідної ролі
             await AuthenticateUser(worker.Id, usernameToUse, userRole);
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
 
-            // Перенаправлення за ролями
+            // Редирект залежно від ролі користувача:
             if (userRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
                 return RedirectToAction("Index", "Admin");
             }
 
-            // Звичайний користувач прямує до товарообігу
+            // Звичайний користувач (Worker) направляється виключно на товари
             return RedirectToAction("Index", "Items");
         }
 
+        // GET: /Account/Register
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Register()
@@ -111,6 +115,7 @@ namespace ServerApp.Controllers
             return View();
         }
 
+        // POST: /Account/Register
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -118,22 +123,24 @@ namespace ServerApp.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            // Перевірка унікальності Email та Name
             var existingWorker = await _context.Workers
-                .AnyAsync(w => w.Email == model.Email || (w.Username != null && w.Username == model.Username));
+                .AnyAsync(w => w.Email == model.Email || w.Username == model.Email);
 
             if (existingWorker)
             {
-                ModelState.AddModelError("", "Користувач з такою поштою або логіном вже існує!");
+                ModelState.AddModelError("", "Користувач з такою поштою вже існує!");
                 return View(model);
             }
 
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(model.Password);
 
+            // Новий користувач завжди створюється з ролью Worker
             var newWorker = new Worker
             {
-                Name = model.Username,
-                Username = model.Username,
+                Name = model.Name,
                 Email = model.Email,
+                Username = model.Email,
                 PasswordHash = hashedPassword,
                 Role = "Worker"
             };
@@ -144,9 +151,17 @@ namespace ServerApp.Controllers
             return RedirectToAction("Login");
         }
 
-        [HttpPost("Logout")]
-        [HttpGet("Logout")]
-        [ValidateAntiForgeryToken]
+        // GET: /Account/AccessDenied (Сторінка 403 при спробі Worker потрапити в Admin)
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
+        // POST/GET: /Account/Logout
+        [HttpPost]
+        [HttpGet]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
