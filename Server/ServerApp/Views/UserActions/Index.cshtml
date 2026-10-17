@@ -126,7 +126,6 @@
                         <tr>
                             <th class="ps-4">ID</th>
                             <th>КОРИСТУВАЧ</th>
-                            <th>ТИП ДІЇ</th>
                             <th>ТОВАР</th>
                             <th class="pe-4">ДАТА ТА ЧАС</th>
                         </tr>
@@ -137,14 +136,10 @@
                             @foreach (var action in Model)
                             {
                                 <tr>
-                                    <!-- Нумерація чисто числами 1, 2, 3 без решітки # -->
+                                    <!-- Нумерація чисто числами 1, 2, 3 без # -->
                                     <td class="ps-4 text-secondary fw-bold">@(index++)</td>
                                     <td class="fw-semibold text-white">
                                         <i class="bi bi-person text-secondary me-1"></i> @(action.Worker?.Name ?? action.Worker?.Username ?? "System")
-                                    </td>
-                                    <!-- Простий чистий текст дії замість плашки/кнопки Take -->
-                                    <td class="text-light fw-medium">
-                                        @action.ActionType
                                     </td>
                                     <td class="text-info fw-semibold">
                                         @(action.Item?.Name ?? "—")
@@ -158,7 +153,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
+                                <td colspan="4" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
                                     Операції відсутні
                                 </td>
