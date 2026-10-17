@@ -127,12 +127,13 @@
                     </div>
                 </div>
 
-                <!-- Знижка -->
+                <!-- Знижка / Націнка -->
                 <div class="mb-4">
-                    <label asp-for="Discount" class="form-label text-muted small fw-semibold">Знижка (%)</label>
+                    <label asp-for="Discount" class="form-label text-muted small fw-semibold">Знижка / Націнка (%)</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-percent"></i></span>
-                        <input asp-for="Discount" type="number" step="0.01" min="0" max="100" class="form-control py-2" />
+                        <!-- Встановлено min="-100" та max="100" для підтримки -5% та +5% -->
+                        <input asp-for="Discount" type="number" step="0.01" min="-100" max="100" class="form-control py-2" placeholder="Наприклад: -5 для знижки або 5 для націнки" />
                     </div>
                     <span asp-validation-for="Discount" class="text-danger small"></span>
                 </div>

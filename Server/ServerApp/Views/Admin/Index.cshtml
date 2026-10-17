@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Панель Управління складом";
     Layout = null;
-    int index = 1; // Початковий номер для порядкової нумерації товарів
+    int index = 1; // Початковий номер для нумерації
 }
 
 <!DOCTYPE html>
@@ -168,7 +168,7 @@
                 <span>Admin <span class="text-secondary fw-normal">Console</span></span>
             </a>
             <div class="d-flex align-items-center gap-3">
-                <a href="/Items/Create" class="btn btn-neon btn-sm px-3 py-1.5 rounded-2 d-inline-flex align-items-center gap-1 btn-add-product">
+                <a href="/Admin/CreateProduct" class="btn btn-neon btn-sm px-3 py-1.5 rounded-2 d-inline-flex align-items-center gap-1 btn-add-product">
                     <i class="bi bi-plus"></i> Додати товар
                 </a>
                 <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
@@ -248,11 +248,11 @@
                             <table class="table table-custom align-middle">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>№</th>
                                         <th>Назва товару</th>
                                         <th>Кількість</th>
                                         <th>Базова ціна</th>
-                                        <th>Знижка</th>
+                                        <th>Знижка / Націнка</th>
                                         <th>Кінцева ціна</th>
                                         <th class="text-end">Дії</th>
                                     </tr>
@@ -263,24 +263,37 @@
                                         @foreach (var item in Model)
                                         {
                                             <tr>
-                                                <!-- Порядковий номер #1, #2, #3 замість сталого ID -->
-                                                <td class="text-secondary fw-bold">#@(index++)</td>
+                                                <!-- Числова нумерація 1, 2, 3 без знака # -->
+                                                <td class="text-secondary fw-bold">@(index++)</td>
                                                 <td class="fw-semibold">@item.Name</td>
                                                 <td>@item.Quantity шт.</td>
                                                 <td>@item.Price.ToString("N2") ₴</td>
                                                 <td>
-                                                    @if (item.Discount > 0)
+                                                    @if (item.Discount != 0)
                                                     {
-                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">-@item.Discount%</span>
+                                                        if (item.Discount < 0)
+                                                        {
+                                                            <!-- Червоний бейдж для знижки (-5.00%) -->
+                                                            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 px-2 py-1">
+                                                                @item.Discount.ToString("F2")%
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <!-- Зелений бейдж для націнки (+5.00%) -->
+                                                            <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2 py-1">
+                                                                +@item.Discount.ToString("F2")%
+                                                            </span>
+                                                        }
                                                     }
                                                     else
                                                     {
-                                                        <span class="text-secondary">0%</span>
+                                                        <span class="text-muted small">0.00%</span>
                                                     }
                                                 </td>
                                                 <td class="text-success fw-bold">@item.FinalPrice.ToString("N2") ₴</td>
                                                 <td class="text-end">
-                                                    <!-- Кнопки дій використовують реальний ID товару для БД -->
+                                                    <!-- Кнопки дій використовують ID товару -->
                                                     <a href="/Admin/Edit/@item.Id" class="btn btn-sm btn-outline-warning me-1"><i class="bi bi-pencil"></i></a>
                                                     <a href="/Admin/Delete/@item.Id" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
                                                 </td>

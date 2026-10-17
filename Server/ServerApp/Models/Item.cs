@@ -1,30 +1,28 @@
+using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ServerApp.Models
 {
-    [Table("Products")]
     public class Item
     {
-        [Key]
-        [Column("ID")]
         public int Id { get; set; }
 
-        [Required]
-        [Column("Name")]
+        [Required(ErrorMessage = "Вкажіть назву товару")]
         public string Name { get; set; } = string.Empty;
 
-        [Column("Quantity")]
+        [Range(0, int.MaxValue, ErrorMessage = "Кількість не може бути від'ємною")]
         public int Quantity { get; set; }
 
-        [Column("Price", TypeName = "decimal(18,2)")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Ціна повинна бути більше 0")]
         public decimal Price { get; set; }
 
-        [Column("Discount", TypeName = "decimal(18,2)")]
+        // Дозволяємо значення від -100% (знижка) до +100% (націнка)
+        [Range(-100, 100, ErrorMessage = "Значення має бути від -100% до +100%")]
         public decimal Discount { get; set; }
 
-        // Обчислювальна властивість для Views
-        [NotMapped]
-        public decimal FinalPrice => Price * (1 - (Discount / 100m));
+        // Фінальна ціна:
+        // Якщо Discount = -5 (знижка 5%), FinalPrice = Price * (1 - 0.05) = Price * 0.95
+        // Якщо Discount = +5 (націнка 5%), FinalPrice = Price * (1 + 0.05) = Price * 1.05
+        public decimal FinalPrice => Price * (1m + (Discount / 100m));
     }
 }

@@ -97,7 +97,7 @@ namespace ServerApp.Controllers
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
 
-            // Редирект залежно від ролі користувача:
+            // Перенаправлення залежно від ролі:
             if (userRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
                 return RedirectToAction("Index", "Admin");
@@ -121,28 +121,29 @@ namespace ServerApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
 
-            // Перевірка унікальності Email та Name
+            // Перевірка дублікатів за Email або Username
             var existingWorker = await _context.Workers
-                .AnyAsync(w => w.Email == model.Email || w.Username == model.Email);
+                .AnyAsync(w => w.Email == model.Email || (w.Username != null && w.Username == model.Username));
 
             if (existingWorker)
             {
-                ModelState.AddModelError("", "Користувач з такою поштою вже існує!");
+                ModelState.AddModelError("", "Користувач з такою поштою або логіном вже існує!");
                 return View(model);
             }
 
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(model.Password);
 
-            // Новий користувач завжди створюється з ролью Worker
+            // Створення нового користувача з обов'язковою ролью Worker
             var newWorker = new Worker
             {
                 Name = model.Name,
+                Username = model.Username,
                 Email = model.Email,
-                Username = model.Email,
                 PasswordHash = hashedPassword,
-                Role = "Worker"
+                Role = "Worker" // Нові користувачі завжди отримують роль Worker
             };
 
             _context.Workers.Add(newWorker);
@@ -151,7 +152,7 @@ namespace ServerApp.Controllers
             return RedirectToAction("Login");
         }
 
-        // GET: /Account/AccessDenied (Сторінка 403 при спробі Worker потрапити в Admin)
+        // GET: /Account/AccessDenied
         [HttpGet]
         [AllowAnonymous]
         public IActionResult AccessDenied()
