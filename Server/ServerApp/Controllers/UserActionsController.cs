@@ -9,7 +9,8 @@ using ServerApp.Models;
 
 namespace ServerApp.Controllers
 {
-    [Authorize]
+    // 🛑 ДОСТУП ДОЗВОЛЕНО ЛИШЕ АДМІНІСТРАТОРАМ
+    [Authorize(Roles = "Admin")] 
     public class UserActionsController : Controller
     {
         private readonly AppDbContext _context;
@@ -19,7 +20,7 @@ namespace ServerApp.Controllers
             _context = context;
         }
 
-        // GET: UserActions
+        // GET: /UserActions
         public async Task<IActionResult> Index()
         {
             var actions = await _context.UserActions
@@ -32,7 +33,7 @@ namespace ServerApp.Controllers
             return View(actions);
         }
 
-        // GET: UserActions/Create
+        // GET: /UserActions/Create
         public IActionResult Create()
         {
             ViewData["ItemId"] = new SelectList(_context.Items.AsNoTracking(), "Id", "Name");
@@ -40,7 +41,7 @@ namespace ServerApp.Controllers
             return View();
         }
 
-        // POST: UserActions/Create
+        // POST: /UserActions/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("WorkerId,ItemId,ActionType,Quantity,Note")] UserAction userAction)
@@ -54,13 +55,11 @@ namespace ServerApp.Controllers
 
                 var actionType = userAction.ActionType?.Trim().ToLower();
 
-                // Прихід товару
                 if (actionType == "прихід" || actionType == "income" || actionType == "receipt")
                 {
                     item.Quantity += userAction.Quantity;
                     userAction.ActionType = "Прихід";
                 }
-                // Списання товару
                 else if (actionType == "списання" || actionType == "outcome" || actionType == "shipment")
                 {
                     if (item.Quantity < userAction.Quantity)
@@ -79,7 +78,6 @@ namespace ServerApp.Controllers
                     return View(userAction);
                 }
 
-                // Фіксуємо ціну товару на момент здійснення операції
                 userAction.PriceAtMoment = item.Price;
 
                 _context.UserActions.Add(userAction);
@@ -92,8 +90,7 @@ namespace ServerApp.Controllers
             return View(userAction);
         }
 
-        // GET: UserActions/Delete/5
-        [Authorize(Roles = "Admin")]
+        // GET: /UserActions/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -109,10 +106,9 @@ namespace ServerApp.Controllers
             return View(action);
         }
 
-        // POST: UserActions/Delete/5
+        // POST: /UserActions/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var action = await _context.UserActions.FindAsync(id);

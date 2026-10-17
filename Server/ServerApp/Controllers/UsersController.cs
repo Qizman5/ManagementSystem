@@ -5,7 +5,8 @@ using ServerApp.Models;
 
 namespace ServerApp.Controllers
 {
-    [Authorize]
+    // 🛑 ДОСТУП ДОЗВОЛЕНО ЛИШЕ АДМІНІСТРАТОРАМ
+    [Authorize(Roles = "Admin")] 
     public class UsersController : Controller
     {
         private readonly AppDbContext _context;
