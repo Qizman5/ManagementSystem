@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -15,7 +14,7 @@ using ServerApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Додавання MVC (Controllers + Views) та Swagger
+// 1. Додавання MVC (Controllers + Views) та налаштування Swagger
 builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -24,9 +23,10 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Warehouse Management System",
+        Version = "v1"
     });
 
-    // Налаштування підтримки Авторизації через JWT Bearer у Swagger UI
+    // Налаштування підтримки авторизації через JWT Bearer у Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -163,24 +163,23 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles(); // Віддає статику з wwwroot
+app.UseStaticFiles();
 app.UseRouting();
 app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🚀 ПІДКТЮЧЕННЯ SWAGGER UI
-// Працюватиме за адресою /swagger/index.html та /swagger
+// 🚀 Підключення Swagger UI (доступний за адресою /swagger)
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse Management System");
-    c.RoutePrefix = "swagger"; // Вказує маршрут /swagger
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse Management System v1");
+    c.RoutePrefix = "swagger";
     c.DocumentTitle = "Warehouse API Documentation";
 });
 
-// Стандартний MVC маршрут
+// Стандартна маршрутизація MVC
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Items}/{action=Index}/{id?}");
