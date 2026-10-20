@@ -23,9 +23,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Warehouse Management API",
-        Version = "v1",
-        Description = "REST API для системи управління складом (WMS)"
+        Title = "Warehouse Management System",
     });
 
     // Налаштування підтримки Авторизації через JWT Bearer у Swagger UI
@@ -177,7 +175,7 @@ app.UseAuthorization();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse Management API v1");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse Management System");
     c.RoutePrefix = "swagger"; // Вказує маршрут /swagger
     c.DocumentTitle = "Warehouse API Documentation";
 });
