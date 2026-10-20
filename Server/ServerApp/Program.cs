@@ -13,8 +13,17 @@ using ServerApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Додавання підтримки MVC (Controllers + Views)
+// 1. Додавання MVC та генератора Swagger
 builder.Services.AddControllersWithViews();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Warehouse Management API",
+        Version = "v1"
+    });
+});
 
 // 2. Підключення до бази даних MySQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -98,7 +107,7 @@ var app = builder.Build();
 
 app.UseForwardedHeaders();
 
-// Ініціалізація БД та створення Admin за замовчуванням
+// База даних
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -133,11 +142,15 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Перенаправлення з Swagger
-app.MapGet("/swagger", context => { context.Response.Redirect("/Account/Login"); return Task.CompletedTask; });
-app.MapGet("/swagger/index.html", context => { context.Response.Redirect("/Account/Login"); return Task.CompletedTask; });
+// 🚀 ПІДКТЮЧЕННЯ SWAGGER (Працюватиме за адресою /swagger/index.html)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse API V1");
+    c.RoutePrefix = "swagger";
+});
 
-// Головна маршрутизація: за замовчуванням редірект на каталог товарів /Items
+// Стандартний MVC маршрут
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Items}/{action=Index}/{id?}");
