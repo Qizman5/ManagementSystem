@@ -22,8 +22,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Warehouse Management System",
-        Version = "v1"
+        Title = "Warehouse Management API",
+        Version = "v1",
+        Description = "REST API для системи управління складом (WMS)"
     });
 
     // Налаштування JWT Bearer авторизації у Swagger UI
@@ -170,47 +171,12 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🚀 Підключення та кастомізація Swagger UI
+// Стандартне підключення Swagger UI без модифікації вигляду
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse Management System");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse Management API v1");
     c.RoutePrefix = "swagger";
-    c.DocumentTitle = "Warehouse Management System";
-
-    // 🛑 Повністю приховує блок Schemas
-    c.DefaultModelsExpandDepth(-1);
-
-    // 🎨 CSS Кастомізація для приховування зайвих елементів шапки та бейджів
-    c.HeadContent = @"
-        <style>
-            /* 1. Приховуємо випадаючий список 'Select a definition' у чорній шапці */
-            .swagger-ui .topbar .download-url-wrapper { 
-                display: none !important; 
-            }
-
-            /* 2. Змінюємо заголовок у чорній верхній шапці на 'Warehouse Management System' */
-            .swagger-ui .topbar-wrapper img {
-                content: url('data:image/svg+xml;utf8,<svg xmlns=""http://www.w3.org/2000/svg"" width=""320"" height=""30""><text x=""0"" y=""22"" fill=""white"" font-family=""sans-serif"" font-size=""18"" font-weight=""bold"">Warehouse Management System</text></svg>') !important;
-            }
-
-            /* 3. Повністю приховуємо бейджі v1 та OAS3 поруч із заголовком */
-            .swagger-ui .info .title small.version-stamp,
-            .swagger-ui .info .title .version,
-            .swagger-ui .info .title span {
-                display: none !important;
-            }
-
-            /* 4. Приховуємо посилання на JSON під заголовком */
-            .swagger-ui .info .base-url {
-                display: none !important;
-            }
-
-            /* 5. Приховуємо блок моделей/схем */
-            section.models {
-                display: none !important;
-            }
-        </style>";
 });
 
 // Маршрутизація MVC
