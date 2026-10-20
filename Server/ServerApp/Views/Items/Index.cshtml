@@ -3,6 +3,7 @@
     ViewData["Title"] = "Каталог товарів";
     Layout = null;
     int index = 1;
+    bool isAdmin = User.IsInRole("Admin");
 }
 
 <!DOCTYPE html>
@@ -10,8 +11,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Товари - WMS System</title>
+    <title>Каталог товарів - WMS System</title>
+    <!-- Bootstrap 5 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
 
     <style>
@@ -20,6 +23,7 @@
             --card-bg: #131b2e;
             --card-border: rgba(255, 255, 255, 0.08);
             --accent-blue: #3b82f6;
+            --accent-green: #10b981;
         }
 
         body {
@@ -66,6 +70,20 @@
             color: #f1f5f9;
         }
 
+        .form-control-custom {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .form-control-custom:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent-blue);
+            color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+        }
+
         .badge-count {
             background: rgba(255, 255, 255, 0.08);
             color: #94a3b8;
@@ -73,18 +91,60 @@
             padding: 0.35rem 0.75rem;
             border-radius: 20px;
         }
+
+        .badge-stock {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-low-stock {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary-custom:hover {
+            opacity: 0.95;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
 
     <!-- Навігаційна панель -->
-    <nav class="navbar navbar-dark navbar-custom px-4 py-2 mb-4">
+    <nav class="navbar navbar-dark navbar-custom px-4 py-3 mb-4">
         <div class="container-fluid d-flex justify-content-between align-items-center">
             <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-white fs-5" href="/Items">
                 <i class="bi bi-box-seam text-primary"></i>
-                <span>WMS <span class="text-secondary fw-normal">Склад</span></span>
+                <span>Система <span class="text-secondary fw-normal">управління складом</span></span>
             </a>
-            <div class="d-flex align-items-center gap-2">
+
+            <div class="d-flex align-items-center gap-3">
+                @if (isAdmin)
+                {
+                    <a href="/Admin" class="btn btn-outline-primary btn-sm rounded-2 px-3">
+                        <i class="bi bi-shield-check me-1"></i> AdminConsole
+                    </a>
+                }
+                else
+                {
+                    <div class="text-end d-none d-md-block">
+                        <span class="d-block text-white small fw-semibold">
+                            <i class="bi bi-person-circle text-primary me-1"></i>
+                            @(User.Identity?.Name ?? "Користувач")
+                        </span>
+                        <span class="badge bg-secondary bg-opacity-25 text-secondary" style="font-size: 0.65rem;">Працівник складу</span>
+                    </div>
+                }
+
                 <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-outline-danger btn-sm rounded-2 px-3">
@@ -95,16 +155,47 @@
         </div>
     </nav>
 
-    <!-- Основний контент -->
+    <!-- Основна область -->
     <main class="container-fluid px-4">
-        <div class="glass-card">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold mb-0 d-flex align-items-center gap-2 text-white">
-                    <i class="bi bi-boxes text-primary"></i> Список товарів на складі
-                </h3>
-                <span class="badge badge-count">Всього: @(Model?.Count() ?? 0)</span>
+        <div class="glass-card mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                <div>
+                    <h3 class="fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                        <i class="bi bi-boxes text-primary"></i> Наявний каталог товарів
+                    </h3>
+                    <p class="text-secondary small mb-0">Актуальні залишки, базові цінники та підсумкова вартість</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    @if (isAdmin)
+                    {
+                        <a href="/Items/Create" class="btn btn-primary-custom btn-sm fw-semibold rounded-2 px-3">
+                            <i class="bi bi-plus-lg me-1"></i> Додати товар
+                        </a>
+                    }
+                    <span class="badge badge-count fs-6">Всього позицій: @(Model?.Count() ?? 0)</span>
+                </div>
             </div>
 
+            <!-- Форма пошуку -->
+            <form method="get" asp-action="Index" class="row g-2 mb-4">
+                <div class="col-md-5 col-lg-4">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control form-control-custom" 
+                               placeholder="Пошук за назвою товару..." value="@ViewData["SearchQuery"]" />
+                        <button type="submit" class="btn btn-primary px-3">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+                @if (ViewData["SearchQuery"] != null)
+                {
+                    <div class="col-auto">
+                        <a href="/Items" class="btn btn-outline-secondary">Скинути</a>
+                    </div>
+                }
+            </form>
+
+            <!-- Таблиця товарів -->
             <div class="table-responsive rounded-3">
                 <table class="table table-custom align-middle">
                     <thead>
@@ -115,6 +206,10 @@
                             <th>БАЗОВА ЦІНА</th>
                             <th>ЗНИЖКА / НАЦІНКА</th>
                             <th>КІНЦЕВА ЦІНА</th>
+                            @if (isAdmin)
+                            {
+                                <th class="text-end">ДІЇ</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -122,51 +217,71 @@
                         {
                             @foreach (var item in Model)
                             {
-                                var finalPrice = item.Price * (1 + (item.Discount / 100m));
+                                decimal finalPrice = item.Price * (1m - (item.Discount / 100m));
                                 <tr>
-                                    <!-- Послідовна нумерація 1, 2, 3... без знака # -->
+                                    <!-- Послідовні числа 1, 2, 3 без знака # -->
                                     <td class="text-secondary fw-bold">@(index++)</td>
                                     <td class="fw-semibold text-white">
-                                        <i class="bi bi-box text-secondary me-1"></i> @item.Name
+                                        <i class="bi bi-box me-2 text-primary"></i>@item.Name
                                     </td>
                                     <td>
-                                        <span class="badge bg-dark border border-secondary text-light px-2.5 py-1.5">
-                                            @item.Quantity шт.
-                                        </span>
+                                        @if (item.Quantity > 5)
+                                        {
+                                            <span class="badge badge-stock px-2.5 py-1.5">
+                                                <i class="bi bi-check-circle me-1"></i>@item.Quantity шт.
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-low-stock px-2.5 py-1.5">
+                                                <i class="bi bi-exclamation-triangle me-1"></i>@item.Quantity шт. (мало)
+                                            </span>
+                                        }
                                     </td>
                                     <td class="text-light">
                                         @item.Price.ToString("N2") ₴
                                     </td>
                                     <td>
-                                        @if (item.Discount < 0)
+                                        @if (item.Discount > 0)
                                         {
                                             <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2 py-1 rounded-pill">
-                                                @item.Discount%
+                                                -@item.Discount%
                                             </span>
                                         }
-                                        else if (item.Discount > 0)
+                                        else if (item.Discount < 0)
                                         {
                                             <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25 px-2 py-1 rounded-pill">
-                                                +@item.Discount%
+                                                +@Math.Abs(item.Discount)%
                                             </span>
                                         }
                                         else
                                         {
-                                            <span class="text-muted">0%</span>
+                                            <span class="text-secondary">0%</span>
                                         }
                                     </td>
                                     <td class="text-info fw-bold">
                                         @finalPrice.ToString("N2") ₴
                                     </td>
+                                    @if (isAdmin)
+                                    {
+                                        <td class="text-end">
+                                            <a href="/Items/Edit/@item.Id" class="btn btn-outline-warning btn-sm me-1 rounded-2">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="/Items/Delete/@item.Id" class="btn btn-outline-danger btn-sm rounded-2">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </td>
+                                    }
                                 </tr>
                             }
                         }
                         else
                         {
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-5">
+                                <td colspan="@(isAdmin ? 7 : 6)" class="text-center text-muted py-5">
                                     <i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>
-                                    <span>Товари відсутні у системі</span>
+                                    <span>Товари за вашим запитом не знайдено</span>
                                 </td>
                             </tr>
                         }

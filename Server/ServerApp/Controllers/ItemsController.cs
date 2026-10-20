@@ -7,7 +7,7 @@ using ServerApp.Models;
 
 namespace ServerApp.Controllers
 {
-    [Authorize] // Доступ мають авторизовані користувачі (Admin та Worker)
+    [Authorize] // Доступ дозволено усім авторизованим користувачам (Admin та Worker)
     public class ItemsController : Controller
     {
         private readonly AppDbContext _context;
@@ -21,9 +21,18 @@ namespace ServerApp.Controllers
         [HttpGet]
         [Route("Items")]
         [Route("Items/Index")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search)
         {
-            var items = await _context.Items.AsNoTracking().ToListAsync();
+            var query = _context.Items.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchLower = search.Trim().ToLower();
+                query = query.Where(i => i.Name.ToLower().Contains(searchLower));
+                ViewData["SearchQuery"] = search;
+            }
+
+            var items = await query.OrderBy(i => i.Name).ToListAsync();
             return View("~/Views/Items/Index.cshtml", items);
         }
 
