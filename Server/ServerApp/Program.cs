@@ -171,7 +171,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Стандартне підключення Swagger UI без модифікації вигляду
+// Стандартне підключення Swagger UI
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
