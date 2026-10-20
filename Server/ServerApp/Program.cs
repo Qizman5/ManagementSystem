@@ -23,6 +23,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Warehouse Management System",
+        Version = "v1"
     });
 
     // Налаштування підтримки авторизації через JWT Bearer у Swagger UI
@@ -180,14 +181,19 @@ app.UseSwaggerUI(c =>
     // Приховує блок Schemas у Swagger UI
     c.DefaultModelsExpandDepth(-1);
 
-    // Приховуємо випадаючий список "Select a definition" та кастомізуємо логотип
+    // Кастомізація стилів Swagger UI
     c.HeadContent = @"
         <style>
             .swagger-ui .topbar .download-url-wrapper { 
                 display: none !important; 
             }
             .swagger-ui .topbar-wrapper img {
-                content: url('data:image/svg+xml;utf8,<svg xmlns=""http://www.w3.org/2000/svg"" width=""140"" height=""30""><text x=""0"" y=""22"" fill=""white"" font-family=""sans-serif"" font-size=""18"" font-weight=""bold"">WMS API</text></svg>');
+                content: url('data:image/svg+xml;utf8,<svg xmlns=""http://www.w3.org/2000/svg"" width=""320"" height=""30""><text x=""0"" y=""22"" fill=""white"" font-family=""sans-serif"" font-size=""18"" font-weight=""bold"">Warehouse Management System</text></svg>');
+            }
+            .swagger-ui .info .title small.version-stamp,
+            .swagger-ui .info .title .version,
+            .swagger-ui .info .title span {
+                display: none !important;
             }
             section.models {
                 display: none !important;
