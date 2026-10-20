@@ -14,7 +14,7 @@ using ServerApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Додавання MVC (Controllers + Views) та конфігурація Swagger Gen
+// 1. Додавання MVC (Controllers + Views) та Swagger Gen
 builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -26,7 +26,7 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1"
     });
 
-    // Налаштування підтримки авторизації через JWT Bearer у Swagger UI
+    // Налаштування JWT Bearer авторизації у Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -135,7 +135,7 @@ var app = builder.Build();
 
 app.UseForwardedHeaders();
 
-// Ініціалізація бази даних та створення адміністратора за замовчуванням
+// Ініціалізація БД
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -178,30 +178,42 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
     c.DocumentTitle = "Warehouse Management System";
 
-    // Приховує блок Schemas у Swagger UI
+    // 🛑 Повністю приховує блок Schemas
     c.DefaultModelsExpandDepth(-1);
 
-    // Кастомізація стилів Swagger UI
+    // 🎨 CSS Кастомізація для приховування зайвих елементів шапки та бейджів
     c.HeadContent = @"
         <style>
+            /* 1. Приховуємо випадаючий список 'Select a definition' у чорній шапці */
             .swagger-ui .topbar .download-url-wrapper { 
                 display: none !important; 
             }
+
+            /* 2. Змінюємо заголовок у чорній верхній шапці на 'Warehouse Management System' */
             .swagger-ui .topbar-wrapper img {
-                content: url('data:image/svg+xml;utf8,<svg xmlns=""http://www.w3.org/2000/svg"" width=""320"" height=""30""><text x=""0"" y=""22"" fill=""white"" font-family=""sans-serif"" font-size=""18"" font-weight=""bold"">Warehouse Management System</text></svg>');
+                content: url('data:image/svg+xml;utf8,<svg xmlns=""http://www.w3.org/2000/svg"" width=""320"" height=""30""><text x=""0"" y=""22"" fill=""white"" font-family=""sans-serif"" font-size=""18"" font-weight=""bold"">Warehouse Management System</text></svg>') !important;
             }
+
+            /* 3. Повністю приховуємо бейджі v1 та OAS3 поруч із заголовком */
             .swagger-ui .info .title small.version-stamp,
             .swagger-ui .info .title .version,
             .swagger-ui .info .title span {
                 display: none !important;
             }
+
+            /* 4. Приховуємо посилання на JSON під заголовком */
+            .swagger-ui .info .base-url {
+                display: none !important;
+            }
+
+            /* 5. Приховуємо блок моделей/схем */
             section.models {
                 display: none !important;
             }
         </style>";
 });
 
-// Стандартна маршрутизація MVC
+// Маршрутизація MVC
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Items}/{action=Index}/{id?}");
