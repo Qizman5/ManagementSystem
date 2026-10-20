@@ -23,8 +23,6 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Warehouse Management System",
-        Version = "v1",
-        Description = "REST API системи управління складом Чернівецького національного університету"
     });
 
     // Налаштування підтримки авторизації через JWT Bearer у Swagger UI
@@ -175,9 +173,9 @@ app.UseAuthorization();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse Management System v1");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse Management System");
     c.RoutePrefix = "swagger";
-    c.DocumentTitle = "Warehouse Management System API";
+    c.DocumentTitle = "Warehouse Management System";
 
     // Приховуємо випадаючий список "Select a definition" та кастомізуємо логотип
     c.HeadContent = @"
