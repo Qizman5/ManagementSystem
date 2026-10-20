@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -46,7 +48,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// 5. Конфігурація JWT та Cookie (ЄДИНИЙ ЛАНЦЮЖОК АВТЕНТИФІКАЦІЇ)
+// 5. Конфігурація JWT та Cookie
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKeyForJWTTokenGeneration2026!";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ServerApp";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ServerAppUsers";
@@ -60,9 +62,9 @@ builder.Services.AddAuthentication(options =>
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
     options.Cookie.Name = "WarehouseAuthCookie";
-    options.LoginPath = "/Account/Login";              // Сторінка входу для незареєстрованих
+    options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied"; // 👈 Автоматичне перенаправлення, якщо немає прав Admin
+    options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
 })
 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -131,14 +133,14 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🛑 Перенаправлення з адрес Swagger на сторінку Входу
+// Перенаправлення з Swagger
 app.MapGet("/swagger", context => { context.Response.Redirect("/Account/Login"); return Task.CompletedTask; });
 app.MapGet("/swagger/index.html", context => { context.Response.Redirect("/Account/Login"); return Task.CompletedTask; });
 
-// 🎯 Дефолтна маршрутизація
+// Головна маршрутизація: за замовчуванням редірект на каталог товарів /Items
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
+    pattern: "{controller=Items}/{action=Index}/{id?}");
 
 app.MapControllers();
 

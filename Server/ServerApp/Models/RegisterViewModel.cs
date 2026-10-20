@@ -4,7 +4,7 @@ namespace ServerApp.Models
 {
     public class RegisterViewModel
     {
-        [Required(ErrorMessage = "Вкажіть ім'я")]
+        [Required(ErrorMessage = "Вкажіть повне ім'я")]
         [Display(Name = "Повне ім'я")]
         public string Name { get; set; } = string.Empty;
 
@@ -18,11 +18,14 @@ namespace ServerApp.Models
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Вкажіть пароль")]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "Пароль має містити щонайменше 8 символів")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$", 
+            ErrorMessage = "Пароль повинен містити принаймні одну велику літеру, одну малу літеру, цифру та спецсимвол (!@#$%^&*).")]
         [DataType(DataType.Password)]
-        [MinLength(4, ErrorMessage = "Пароль має містити щонайменше 4 символи")]
         [Display(Name = "Пароль")]
         public string Password { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "Підтвердіть пароль")]
         [DataType(DataType.Password)]
         [Display(Name = "Підтвердження пароля")]
         [Compare("Password", ErrorMessage = "Паролі не збігаються")]
