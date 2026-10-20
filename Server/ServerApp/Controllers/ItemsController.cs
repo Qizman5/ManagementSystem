@@ -7,7 +7,8 @@ using ServerApp.Models;
 
 namespace ServerApp.Controllers
 {
-    [Authorize] // Доступ дозволено усім авторизованим користувачам (Admin та Worker)
+    [Authorize]
+    [ApiExplorerSettings(IgnoreApi = true)] // 👈 Приховує цей MVC-контролер з документації Swagger
     public class ItemsController : Controller
     {
         private readonly AppDbContext _context;
