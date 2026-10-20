@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -9,19 +10,48 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using ServerApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Додавання MVC та генератора Swagger
+// 1. Додавання MVC (Controllers + Views) та Swagger
 builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Warehouse Management API",
-        Version = "v1"
+        Version = "v1",
+        Description = "REST API для системи управління складом (WMS)"
+    });
+
+    // Налаштування підтримки Авторизації через JWT Bearer у Swagger UI
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Введіть JWT токен у форматі: Bearer {your_token}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 
@@ -30,7 +60,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// 3. Rate Limiting
+// 3. Rate Limiting (Обмеження частоти запитів)
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -57,7 +87,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// 5. Конфігурація JWT та Cookie
+// 5. Конфігурація JWT та Cookie (Автентифікація)
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKeyForJWTTokenGeneration2026!";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ServerApp";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ServerAppUsers";
@@ -107,7 +137,7 @@ var app = builder.Build();
 
 app.UseForwardedHeaders();
 
-// База даних
+// Ініціалізація бази даних та створення адміністратора за замовчуванням
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -135,19 +165,21 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(); // Віддає статику з wwwroot
 app.UseRouting();
 app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🚀 ПІДКТЮЧЕННЯ SWAGGER (Працюватиме за адресою /swagger/index.html)
+// 🚀 ПІДКТЮЧЕННЯ SWAGGER UI
+// Працюватиме за адресою /swagger/index.html та /swagger
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse API V1");
-    c.RoutePrefix = "swagger";
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse Management API v1");
+    c.RoutePrefix = "swagger"; // Вказує маршрут /swagger
+    c.DocumentTitle = "Warehouse API Documentation";
 });
 
 // Стандартний MVC маршрут
