@@ -20,10 +20,9 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
+    c.SwaggerDoc("", new OpenApiInfo
     {
         Title = "Warehouse Management System",
-        Version = "v1"
     });
 
     // Налаштування підтримки авторизації через JWT Bearer у Swagger UI
