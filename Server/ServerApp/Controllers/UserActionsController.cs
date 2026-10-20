@@ -10,7 +10,7 @@ using ServerApp.Models;
 namespace ServerApp.Controllers
 {
     // 🛑 ДОСТУП ДОЗВОЛЕНО ЛИШЕ АДМІНІСТРАТОРАМ
-    [Authorize(Roles = "Admin")] 
+    [Authorize(Roles = "Admin")]
     public class UserActionsController : Controller
     {
         private readonly AppDbContext _context;
@@ -36,8 +36,7 @@ namespace ServerApp.Controllers
         // GET: /UserActions/Create
         public IActionResult Create()
         {
-            ViewData["ItemId"] = new SelectList(_context.Items.AsNoTracking(), "Id", "Name");
-            ViewData["WorkerId"] = new SelectList(_context.Workers.AsNoTracking(), "Id", "Name");
+            PopulateSelectLists();
             return View();
         }
 
@@ -120,7 +119,7 @@ namespace ServerApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private void PopulateSelectLists(int selectedItemId, int selectedWorkerId)
+        private void PopulateSelectLists(int? selectedItemId = null, int? selectedWorkerId = null)
         {
             ViewData["ItemId"] = new SelectList(_context.Items.AsNoTracking(), "Id", "Name", selectedItemId);
             ViewData["WorkerId"] = new SelectList(_context.Workers.AsNoTracking(), "Id", "Name", selectedWorkerId);
