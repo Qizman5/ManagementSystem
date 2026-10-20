@@ -14,7 +14,7 @@ using ServerApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Додавання MVC (Controllers + Views) та налаштування Swagger
+// 1. Додавання MVC (Controllers + Views) та конфігурація Swagger Gen
 builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -23,7 +23,8 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Warehouse Management System",
-        Version = "v1"
+        Version = "v1",
+        Description = "REST API системи управління складом Чернівецького національного університету"
     });
 
     // Налаштування підтримки авторизації через JWT Bearer у Swagger UI
@@ -170,13 +171,24 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🚀 Підключення Swagger UI (доступний за адресою /swagger)
+// 🚀 Підключення та кастомізація Swagger UI
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Warehouse Management System v1");
     c.RoutePrefix = "swagger";
-    c.DocumentTitle = "Warehouse API Documentation";
+    c.DocumentTitle = "Warehouse Management System API";
+
+    // Приховуємо випадаючий список "Select a definition" та кастомізуємо логотип
+    c.HeadContent = @"
+        <style>
+            .swagger-ui .topbar .download-url-wrapper { 
+                display: none !important; 
+            }
+            .swagger-ui .topbar-wrapper img {
+                content: url('data:image/svg+xml;utf8,<svg xmlns=""http://www.w3.org/2000/svg"" width=""140"" height=""30""><text x=""0"" y=""22"" fill=""white"" font-family=""sans-serif"" font-size=""18"" font-weight=""bold"">WMS API</text></svg>');
+            }
+        </style>";
 });
 
 // Стандартна маршрутизація MVC
