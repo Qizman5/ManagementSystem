@@ -136,7 +136,7 @@ var app = builder.Build();
 
 app.UseForwardedHeaders();
 
-// Ініціалізація БД
+// Ініціалізація БД та створення адміністратора
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -157,13 +157,12 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// Редирект на HTTPS працює тільки у продакшні, щоб локально не виводити попередження про порт
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseRateLimiter();
@@ -171,7 +170,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Стандартне підключення Swagger UI
+// Підключення стандартного Swagger UI
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -179,7 +178,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-// Маршрутизація MVC
+// Стандартна маршрутизація MVC
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Items}/{action=Index}/{id?}");
@@ -187,4 +186,3 @@ app.MapControllerRoute(
 app.MapControllers();
 
 app.Run();
-
