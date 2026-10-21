@@ -27,7 +27,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "REST API для системи управління складом (WMS)"
     });
 
-    // Налаштування JWT Bearer авторизації у Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -157,7 +156,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Редирект на HTTPS працює тільки у продакшні, щоб локально не виводити попередження про порт
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
@@ -170,7 +168,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Підключення стандартного Swagger UI
+// Swagger UI
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -178,10 +176,16 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-// Стандартна маршрутизація MVC
+// Автоматичне перенаправлення з / на /Account/Login
+app.MapGet("/", ctx => {
+    ctx.Response.Redirect("/Account/Login");
+    return Task.CompletedTask;
+});
+
+// Головний маршрут на контролер Account та дійство Login
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Items}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.MapControllers();
 
